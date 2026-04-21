@@ -1,0 +1,98 @@
+:root {
+  --text: #132033;
+  --muted: #667085;
+  --border: rgba(15, 23, 42, 0.12);
+  --border-strong: rgba(15, 23, 42, 0.18);
+  --accent: #b42318;
+  --accent-2: #d92d20;
+  --accent-soft: rgba(180, 35, 24, 0.1);
+  --accent-wash: rgba(180, 35, 24, 0.05);
+  --shadow: 0 24px 64px rgba(15, 23, 42, 0.12);
+  --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --surface: #ffffff;
+  --surface-2: rgba(255, 255, 255, 0.8);
+  --surface-strong: #ffffff;
+  --radius-xl: 28px;
+  --radius-lg: 22px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+}
+
+html {
+  color: var(--text);
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(217, 45, 32, 0.09),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(17, 24, 39, 0.05),
+      transparent 28%
+    ),
+    linear-gradient(180deg, #f7f5f1 0%, #f3efe9 100%);
+  font-family:
+    "Inter",
+    "Segoe UI Variable",
+    "Segoe UI",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--text);
+  background:
+    radial-gradient(
+      circle at 12% 12%,
+      rgba(217, 45, 32, 0.08),
+      transparent 24%
+    ),
+    radial-gradient(circle at 88% 0%, rgba(15, 23, 42, 0.06), transparent 22%),
+    linear-gradient(180deg, #f8f6f2 0%, #f1ece5 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: anywhere;
+}
+
+* {
+  box-sizing: border-box;
+}

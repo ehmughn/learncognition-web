@@ -1,0 +1,226 @@
+/* LearnCognition — Design System */
+
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap");
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* DESIGN TOKENS                                                               */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Colors - Light Mode */
+  --accent: #c0241a;
+  --accent-2: #8b1a14;
+  --accent-soft: rgba(192, 36, 26, 0.08);
+  --text: #111318;
+  --text-secondary: #2f3d4d;
+  --muted: #6b7280;
+  --faint: #9ca3af;
+  --surface: #ffffff;
+  --bg: #f5f4f2;
+
+  /* Borders & Shadows */
+  --border: rgba(17, 19, 24, 0.1);
+  --border-soft: rgba(17, 19, 24, 0.06);
+  --shadow-soft:
+    0 1px 3px rgba(17, 19, 24, 0.06), 0 4px 16px rgba(17, 19, 24, 0.06);
+  --shadow-md:
+    0 2px 8px rgba(17, 19, 24, 0.08), 0 8px 32px rgba(17, 19, 24, 0.08);
+  --shadow-lg: 0 8px 24px rgba(17, 19, 24, 0.12);
+
+  /* Spacing Scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+
+  /* Radius */
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  /* Typography */
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-size-base: 0.9375rem;
+  --line-height-tight: 1.12;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.65;
+
+  /* Transitions */
+  --transition-fast: 120ms;
+  --transition-base: 140ms;
+  --transition-slow: 200ms;
+}
+
+/* Dark Mode */
+[data-theme="dark"] {
+  --accent: #e74c3c;
+  --accent-2: #c0392b;
+  --accent-soft: rgba(231, 76, 60, 0.12);
+  --text: #ffffff;
+  --text-secondary: #e8eef8;
+  --muted: #a9b3c1;
+  --faint: #6b7280;
+  --surface: #1a1d23;
+  --bg: #0f1117;
+
+  --border: rgba(255, 255, 255, 0.1);
+  --border-soft: rgba(255, 255, 255, 0.05);
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4), 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* CSS RESET                                                                    */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--text);
+  background: var(--bg);
+  min-height: 100vh;
+  transition:
+    background-color var(--transition-slow),
+    color var(--transition-slow);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* TYPOGRAPHY                                                                  */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: var(--line-height-tight);
+}
+
+h1 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+h2 {
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+h4 {
+  font-size: 1.1rem;
+}
+
+p {
+  color: var(--text);
+  line-height: var(--line-height-relaxed);
+}
+
+small {
+  font-size: 0.75rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* BASE ELEMENTS                                                               */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.app-shell {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* UTILITY CLASSES                                                             */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: var(--space-md);
+}
+
+.subtitle {
+  font-size: 0.9375rem;
+  color: var(--muted);
+  line-height: var(--line-height-relaxed);
+  max-width: 64ch;
+  margin-top: var(--space-md);
+}
+
+.subtitle.large {
+  font-size: 1.0625rem;
+}
+
+.preview-banner {
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius);
+  border: 1px solid rgba(192, 36, 26, 0.14);
+  background: var(--accent-soft);
+  color: var(--accent-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.toast {
+  position: fixed;
+  bottom: var(--space-lg);
+  right: var(--space-lg);
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--text);
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 300ms ease-out;
+  z-index: 1000;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

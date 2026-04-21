@@ -1,0 +1,402 @@
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* RESPONSIVE DESIGN                                                            */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+/* TABLETS & SMALL DESKTOPS: 900px and below */
+@media (max-width: 900px) {
+  .teacher-shell {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+
+  .teacher-shell.collapsed {
+    grid-template-columns: 60px minmax(0, 1fr);
+  }
+
+  .teacher-sidebar {
+    padding: var(--space-xl) var(--space-md);
+  }
+
+  .teacher-main {
+    padding: 28px clamp(20px, 2vw, 36px) 48px;
+  }
+
+  .page-topbar {
+    flex-direction: column;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+  }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .content-grid {
+    gap: var(--space-lg);
+  }
+
+  .page-body {
+    gap: var(--space-lg);
+  }
+
+  .hero-card {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .guest-content {
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+  }
+
+  .pie-chart-card {
+    flex-direction: column;
+    gap: var(--space-xl);
+  }
+
+  .four-up {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+}
+
+/* MOBILE: 720px and below */
+@media (max-width: 720px) {
+  :root {
+    font-size: 15px;
+  }
+
+  .teacher-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-shell.collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100vh;
+    max-width: 280px;
+    z-index: 998;
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+    transition: left var(--transition-base);
+    padding: var(--space-xl);
+  }
+
+  .teacher-shell.open .teacher-sidebar {
+    left: 0;
+  }
+
+  .teacher-main {
+    padding: 20px var(--space-lg) 48px;
+  }
+
+  .page-topbar {
+    margin-bottom: var(--space-lg);
+  }
+
+  .desktop-toggle {
+    display: inline-grid;
+  }
+
+  .mobile-nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  .mobile-nav-link {
+    padding: var(--space-lg) 0;
+    border-radius: 0;
+    border: none;
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .page-body {
+    gap: var(--space-lg);
+  }
+
+  .content-grid {
+    gap: var(--space-lg);
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .four-up {
+    grid-template-columns: 1fr;
+  }
+
+  .two-column {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-tiles {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .hero-tiles > div {
+    padding: var(--space-md);
+  }
+
+  .guest-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-2xl);
+  }
+
+  .guest-top-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .guest-top-actions a,
+  .guest-top-actions button {
+    width: 100%;
+  }
+
+  .guest-copy {
+    padding: var(--space-lg) 0;
+  }
+
+  .guest-copy h1 {
+    font-size: 1.5rem;
+  }
+
+  .metric-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+  }
+
+  .metric-card {
+    padding: var(--space-lg);
+  }
+
+  .metric-card strong {
+    font-size: 1.25rem;
+  }
+
+  .pie-chart-card {
+    gap: var(--space-lg);
+  }
+
+  .pie-donut {
+    width: 140px;
+    height: 140px;
+  }
+
+  .pie-donut::after {
+    width: 100px;
+    height: 100px;
+  }
+
+  .bar-chart {
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+    gap: var(--space-md);
+  }
+
+  .bar-track {
+    height: 100px;
+  }
+
+  .line-chart {
+    height: 160px;
+  }
+
+  .modal-backdrop {
+    padding: var(--space-lg);
+  }
+
+  .modal-panel {
+    max-width: calc(100% - 2 * var(--space-lg));
+  }
+
+  .button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .topbar-actions,
+  .form-actions,
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .topbar-actions button,
+  .topbar-actions a,
+  .form-actions button,
+  .form-actions a,
+  .hero-actions button,
+  .hero-actions a {
+    width: 100%;
+  }
+
+  .form-stack {
+    gap: var(--space-lg);
+  }
+
+  .panel,
+  .guest-panel {
+    padding: var(--space-lg);
+  }
+
+  .sidebar-card {
+    padding: var(--space-lg);
+  }
+
+  .sidebar-card p {
+    font-size: 0.75rem;
+  }
+
+  .panel h3 {
+    font-size: 1.1rem;
+  }
+
+  .hero-card {
+    padding: var(--space-lg);
+    gap: var(--space-lg);
+  }
+
+  .quick-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+
+  .quick-link {
+    padding: var(--space-lg);
+    font-size: 0.8rem;
+  }
+
+  table {
+    font-size: 0.8rem;
+  }
+
+  th,
+  td {
+    padding: var(--space-md);
+  }
+
+  .activity-row,
+  .summary-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .summary-row span {
+    text-align: left;
+  }
+
+  .topbar-actions > *,
+  .form-actions > *,
+  .hero-actions > * {
+    flex: 1;
+    min-width: 100%;
+  }
+
+  .start-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+
+  .start-note {
+    order: -1;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.875rem;
+    max-width: none;
+  }
+
+  .subtitle.large {
+    font-size: 0.95rem;
+  }
+}
+
+/* SMALL PHONES: 480px and below */
+@media (max-width: 480px) {
+  .teacher-main {
+    padding: 16px var(--space-md) 32px;
+  }
+
+  .page-topbar-heading {
+    gap: var(--space-md);
+  }
+
+  .eyebrow {
+    font-size: 0.6rem;
+  }
+
+  .metric-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card strong {
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+  }
+
+  .hero-copy h3 {
+    font-size: 1.1rem;
+  }
+
+  .page-body {
+    gap: var(--space-lg);
+  }
+
+  .panel,
+  .guest-panel {
+    padding: var(--space-lg) var(--space-md);
+    border-radius: var(--radius);
+  }
+
+  .modal-panel {
+    border-radius: var(--radius);
+  }
+
+  table {
+    font-size: 0.75rem;
+  }
+
+  th,
+  td {
+    padding: var(--space-md) var(--space-sm);
+  }
+}
+
+/* Print styles */
+@media print {
+  .desktop-toggle,
+  .mobile-nav,
+  .topbar-actions,
+  .form-actions,
+  .teacher-sidebar {
+    display: none;
+  }
+
+  .teacher-main {
+    padding: 0;
+  }
+
+  body {
+    background: #fff;
+  }
+}
