@@ -18,6 +18,7 @@ export function resolveRoute(pathname, isAuthenticated) {
   if (path === "/reset-password") return { kind: "reset-password" };
   if (path === "/start") return { kind: "start" };
   if (path === "/dashboard") return { kind: "dashboard" };
+  if (path === "/notifications") return { kind: "notifications" };
   if (path === "/create") return { kind: "create" };
   if (path === "/modules") return { kind: "modules" };
   if (path === "/profile") return { kind: "profile" };

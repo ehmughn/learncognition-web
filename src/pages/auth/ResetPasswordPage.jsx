@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../../context/AppContext.jsx";
 import { GuestShell } from "../../components/layout/GuestShell.jsx";
-import { Card } from "../../components/ui/Card.jsx";
 import { Field } from "../../components/ui/Card.jsx";
 import { Input } from "../../components/ui/FormInputs.jsx";
 import { PrimaryButton } from "../../components/ui/Button.jsx";
@@ -51,34 +50,37 @@ export default function ResetPasswordPage() {
         </>
       }
     >
-      <form className="form-stack" onSubmit={submit}>
-        <Field label="New password">
-          <Input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Enter a new password"
-          />
-        </Field>
-        <Field label="Confirm password">
-          <Input
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            placeholder="Repeat the password"
-          />
-        </Field>
-        <div className="form-actions">
-          <PrimaryButton type="submit">Save password</PrimaryButton>
+      <div className="auth-panel-stack">
+        <form className="form-stack" onSubmit={submit}>
+          <Field label="New password">
+            <Input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter a new password"
+            />
+          </Field>
+          <Field label="Confirm password">
+            <Input
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder="Repeat the password"
+            />
+          </Field>
+          <div className="form-actions">
+            <PrimaryButton type="submit">Save password</PrimaryButton>
+          </div>
+        </form>
+
+        <div className="auth-note">
+          <strong>Next step</strong>
+          <p>
+            You will be redirected to the teacher home page after the password
+            is saved.
+          </p>
         </div>
-      </form>
-      <Card className="side-note">
-        <p className="eyebrow">Next step</p>
-        <p>
-          You will be redirected to the teacher home page after the password is
-          saved.
-        </p>
-      </Card>
+      </div>
     </GuestShell>
   );
 }

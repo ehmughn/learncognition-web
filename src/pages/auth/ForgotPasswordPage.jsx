@@ -1,11 +1,10 @@
+import { Mail } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "../../context/AppContext.jsx";
-import { GuestShell } from "../../components/layout/GuestShell.jsx";
-import { Card } from "../../components/ui/Card.jsx";
+import { AuthShell } from "../../components/layout/AuthShell.jsx";
 import { Field } from "../../components/ui/Card.jsx";
 import { Input } from "../../components/ui/FormInputs.jsx";
-import { PrimaryButton, SecondaryButton } from "../../components/ui/Button.jsx";
-import { AppLink } from "../../components/ui/AppLink.jsx";
+import { PrimaryButton } from "../../components/ui/Button.jsx";
 import { makeCode } from "../../utils/formatting.js";
 
 export default function ForgotPasswordPage() {
@@ -44,59 +43,49 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <GuestShell
-      kicker="Password recovery"
-      title="Request a password change and verify the emailed code."
-      subtitle="The forgot-password page handles both the request and the code check before the reset screen opens."
-      actions={
-        <>
-          <AppLink to="/login" className="text-link">
-            Login
-          </AppLink>
-          <AppLink to="/register" className="text-link">
-            Register
-          </AppLink>
-        </>
-      }
+    <AuthShell
+      title="Forgot password"
+      subtitle="Request a reset code and continue in a clean two-step flow."
+      footerLinks={[
+        { label: "Log in", to: "/login" },
+        { label: "Register", to: "/register" },
+      ]}
+      backTo="/"
     >
-      <form className="form-stack" onSubmit={requestCode}>
-        <Field label="Email address">
-          <Input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="teacher@school.edu"
-          />
-        </Field>
-        <div className="form-actions">
-          <PrimaryButton type="submit">Send reset code</PrimaryButton>
-        </div>
-      </form>
-      <form className="form-stack nested" onSubmit={continueToReset}>
-        <Field label="Reset code">
-          <Input
-            value={code}
-            onChange={(event) => setCode(event.target.value)}
-            placeholder={codeSent ? sentCode : "Awaiting code"}
-          />
-        </Field>
-        <div className="form-actions">
-          <SecondaryButton type="submit">
-            Continue to reset password
-          </SecondaryButton>
-          <AppLink to="/login" className="text-link">
-            Back to login
-          </AppLink>
-        </div>
-      </form>
-      <Card className="side-note">
-        <p className="eyebrow">Email preview</p>
-        <p>
-          {codeSent
-            ? `Reset code: ${sentCode}`
-            : "A code preview appears here after request."}
-        </p>
-      </Card>
-    </GuestShell>
+      <div className="auth-stack">
+        <form className="form-stack auth-form" onSubmit={requestCode}>
+          <Field label="Email address">
+            <Input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="teacher@school.edu"
+            />
+          </Field>
+          <PrimaryButton type="submit" className="full-width">
+            <Mail size={16} aria-hidden="true" />
+            Send reset code
+          </PrimaryButton>
+        </form>
+
+        {codeSent ? (
+          <>
+            <div className="auth-divider" aria-hidden="true" />
+            <form className="form-stack auth-form" onSubmit={continueToReset}>
+              <Field label="Reset code">
+                <Input
+                  value={code}
+                  onChange={(event) => setCode(event.target.value)}
+                  placeholder={sentCode}
+                />
+              </Field>
+              <PrimaryButton type="submit" className="full-width">
+                Continue to reset password
+              </PrimaryButton>
+            </form>
+          </>
+        ) : null}
+      </div>
+    </AuthShell>
   );
 }

@@ -1,19 +1,16 @@
+import { LogIn } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "../../context/AppContext.jsx";
-import { GuestShell } from "../../components/layout/GuestShell.jsx";
-import { Card } from "../../components/ui/Card.jsx";
+import { AuthShell } from "../../components/layout/AuthShell.jsx";
 import { Field } from "../../components/ui/Card.jsx";
-import { Input, Select } from "../../components/ui/FormInputs.jsx";
-import { PrimaryButton, SecondaryButton } from "../../components/ui/Button.jsx";
+import { Input } from "../../components/ui/FormInputs.jsx";
+import { PrimaryButton } from "../../components/ui/Button.jsx";
 import { AppLink } from "../../components/ui/AppLink.jsx";
-import { makeCode } from "../../utils/formatting.js";
 
 export default function LoginPage() {
   const { navigate, setSession, setPendingFlow, showToast } = useApp();
   const [email, setEmail] = useState("teacher@learncognition.com");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("teacher");
-  const [needsVerification, setNeedsVerification] = useState(false);
 
   const submit = (event) => {
     event.preventDefault();
@@ -22,19 +19,24 @@ export default function LoginPage() {
       return;
     }
 
-    if (role === "admin" || needsVerification) {
-      const code = makeCode();
+    const normalizedEmail = email.toLowerCase();
+    const requiresVerification =
+      normalizedEmail.includes("admin") || normalizedEmail.includes("verify");
+
+    if (requiresVerification) {
       setPendingFlow({
         kind: "verify",
-        role,
+        role: normalizedEmail.includes("admin") ? "admin" : "teacher",
         email,
-        code,
-        purpose: role === "admin" ? "admin-owner" : "account",
+        code: "4821936507",
+        purpose: normalizedEmail.includes("admin") ? "admin-owner" : "account",
       });
       setSession({
         authenticated: false,
-        role,
-        name: role === "admin" ? "Admin user" : "Teacher account",
+        role: normalizedEmail.includes("admin") ? "admin" : "teacher",
+        name: normalizedEmail.includes("admin")
+          ? "Admin user"
+          : "Teacher account",
         email,
         verified: false,
       });
@@ -45,7 +47,7 @@ export default function LoginPage() {
 
     setSession({
       authenticated: true,
-      role,
+      role: "teacher",
       name: "Ari Santos",
       email,
       verified: true,
@@ -56,40 +58,22 @@ export default function LoginPage() {
   };
 
   return (
-    <GuestShell
-      kicker="Sign in"
-      title="Welcome back to LearnCognition."
-      subtitle="Teachers and admins can log in from one page. Unverified accounts are routed to email verification before access continues."
-      actions={
-        <>
-          <AppLink to="/" className="text-link">
-            Back to landing
-          </AppLink>
-          <AppLink to="/register" className="text-link">
-            Register
-          </AppLink>
-          <AppLink to="/forgot-password" className="text-link">
-            Forgot password
-          </AppLink>
-        </>
-      }
+    <AuthShell
+      title="Log in"
+      subtitle="Access your teacher dashboard and manage modules from one clean workspace."
+      footerLinks={[
+        { label: "Register", to: "/register" },
+        { label: "Forgot password", to: "/forgot-password" },
+      ]}
+      backTo="/"
     >
-      <form className="form-stack" onSubmit={submit}>
-        <Field label="Account type">
-          <Select
-            value={role}
-            onChange={(event) => setRole(event.target.value)}
-          >
-            <option value="teacher">Teacher</option>
-            <option value="admin">Admin</option>
-          </Select>
-        </Field>
+      <form className="form-stack auth-form" onSubmit={submit}>
         <Field label="Email address">
           <Input
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@school.edu"
+            placeholder="teacher@school.edu"
           />
         </Field>
         <Field label="Password">
@@ -97,31 +81,23 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            placeholder="••••••••"
+            placeholder="Enter your password"
           />
         </Field>
-        <label className="checkbox-row">
-          <input
-            type="checkbox"
-            checked={needsVerification}
-            onChange={(event) => setNeedsVerification(event.target.checked)}
-          />
-          <span>This account still needs verification</span>
-        </label>
-        <div className="form-actions">
-          <PrimaryButton type="submit">Log in</PrimaryButton>
-          <SecondaryButton type="button" onClick={() => navigate("/register")}>
-            Create account
-          </SecondaryButton>
+        <div className="auth-meta-row">
+          <label className="checkbox-row auth-checkbox">
+            <input type="checkbox" defaultChecked />
+            <span>Remember me</span>
+          </label>
+          <AppLink to="/forgot-password" className="text-link">
+            Forgot password?
+          </AppLink>
         </div>
+        <PrimaryButton type="submit" className="full-width">
+          <LogIn size={16} aria-hidden="true" />
+          Log in
+        </PrimaryButton>
       </form>
-      <Card className="side-note">
-        <p className="eyebrow">What happens next</p>
-        <p>
-          Admins always receive an owner-verification email. Teachers only route
-          to verification when the account is unverified.
-        </p>
-      </Card>
-    </GuestShell>
+    </AuthShell>
   );
 }

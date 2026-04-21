@@ -1,8 +1,36 @@
+import {
+  Bell,
+  BookOpen,
+  FolderKanban,
+  FolderPlus,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Settings2,
+  UserRound,
+} from "lucide-react";
 import { useState } from "react";
 import { useApp } from "../../context/AppContext.jsx";
+import { teacherNav } from "../../constants/notifications.js";
 import { AppLink } from "../ui/AppLink.jsx";
 import { SecondaryButton } from "../ui/Button.jsx";
-import { teacherNav } from "../../constants/notifications.js";
+
+const navIcons = {
+  "/": Home,
+  "/dashboard": LayoutDashboard,
+  "/notifications": Bell,
+  "/create": FolderPlus,
+  "/modules": FolderKanban,
+  "/profile": UserRound,
+  "/settings": Settings2,
+  "/start": BookOpen,
+};
+
+function SidebarIcon({ path }) {
+  const Icon = navIcons[path] ?? Home;
+  return <Icon className="sidebar-link-icon" size={16} aria-hidden="true" />;
+}
 
 export function PageShell({
   eyebrow,
@@ -40,7 +68,7 @@ export function PageShell({
             }
             title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            ☰
+            <Menu size={18} aria-hidden="true" />
           </button>
         </div>
 
@@ -60,20 +88,19 @@ export function PageShell({
               to={item.path}
               className={`sidebar-link ${pathname === item.path ? "active" : ""}`}
             >
+              <SidebarIcon path={item.path} />
               <span className="sidebar-link-label">{item.label}</span>
-              <span className="sidebar-link-short" aria-hidden="true">
-                {item.label.charAt(0)}
-              </span>
+              {item.path === "/notifications" && unreadCount > 0 ? (
+                <span className="sidebar-link-badge">{unreadCount}</span>
+              ) : null}
             </AppLink>
           ))}
           <AppLink
             to="/start"
             className={`sidebar-link muted ${pathname === "/start" ? "active" : ""}`}
           >
+            <SidebarIcon path="/start" />
             <span className="sidebar-link-label">Start guide</span>
-            <span className="sidebar-link-short" aria-hidden="true">
-              S
-            </span>
           </AppLink>
         </nav>
 
@@ -91,6 +118,7 @@ export function PageShell({
               : "Teacher preview with mock data"}
           </p>
           <SecondaryButton className="full-width" onClick={signOut}>
+            <LogOut size={16} aria-hidden="true" />
             Sign out
           </SecondaryButton>
         </div>

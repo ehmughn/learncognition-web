@@ -1,11 +1,10 @@
+import { UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "../../context/AppContext.jsx";
-import { GuestShell } from "../../components/layout/GuestShell.jsx";
-import { Card } from "../../components/ui/Card.jsx";
+import { AuthShell } from "../../components/layout/AuthShell.jsx";
 import { Field } from "../../components/ui/Card.jsx";
 import { Input } from "../../components/ui/FormInputs.jsx";
-import { PrimaryButton, SecondaryButton } from "../../components/ui/Button.jsx";
-import { AppLink } from "../../components/ui/AppLink.jsx";
+import { PrimaryButton } from "../../components/ui/Button.jsx";
 import { makeCode } from "../../utils/formatting.js";
 
 export default function RegisterPage() {
@@ -41,22 +40,16 @@ export default function RegisterPage() {
   };
 
   return (
-    <GuestShell
-      kicker="Register"
-      title="Create a teacher account that is ready for classroom work."
-      subtitle="Registration is streamlined for new teachers and ends with an email code so the account can be verified before the home page unlocks."
-      actions={
-        <>
-          <AppLink to="/login" className="text-link">
-            Login
-          </AppLink>
-          <AppLink to="/forgot-password" className="text-link">
-            Forgot password
-          </AppLink>
-        </>
-      }
+    <AuthShell
+      title="Create account"
+      subtitle="Register your teacher workspace and continue to verification in one step."
+      footerLinks={[
+        { label: "Log in", to: "/login" },
+        { label: "Forgot password", to: "/forgot-password" },
+      ]}
+      backTo="/"
     >
-      <form className="form-stack" onSubmit={submit}>
+      <form className="form-stack auth-form" onSubmit={submit}>
         <Field label="Full name">
           <Input
             value={name}
@@ -80,20 +73,11 @@ export default function RegisterPage() {
             placeholder="Choose a strong password"
           />
         </Field>
-        <div className="form-actions">
-          <PrimaryButton type="submit">Register</PrimaryButton>
-          <SecondaryButton type="button" onClick={() => navigate("/login")}>
-            Back to login
-          </SecondaryButton>
-        </div>
+        <PrimaryButton type="submit" className="full-width">
+          <UserPlus size={16} aria-hidden="true" />
+          Register
+        </PrimaryButton>
       </form>
-      <Card className="side-note">
-        <p className="eyebrow">After signup</p>
-        <p>
-          We simulate an email delivery step and route straight to the
-          verification screen so the flow matches a real product.
-        </p>
-      </Card>
-    </GuestShell>
+    </AuthShell>
   );
 }

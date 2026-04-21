@@ -1,3 +1,4 @@
+import { ArrowLeft, Share2 } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "../../context/AppContext.jsx";
 import { PageShell } from "../../components/layout/PageShell.jsx";
@@ -56,39 +57,100 @@ export default function ModuleSharePage({ moduleId }) {
       actions={
         <>
           <PrimaryButton onClick={() => setIsModalOpen(true)}>
+            <Share2 size={16} aria-hidden="true" />
             Direct share
           </PrimaryButton>
           <SecondaryButton onClick={() => navigate(`/modules/${module.id}`)}>
+            <ArrowLeft size={16} aria-hidden="true" />
             Back to module
           </SecondaryButton>
         </>
       }
     >
-      <div className="content-grid two-column">
-        <Card>
-          <p className="eyebrow">Generated share code</p>
-          <div className="share-code">{module.code}</div>
-          <p>
-            Students can enter this code in the mobile app to join the module.
-          </p>
-        </Card>
-        <Card>
-          <p className="eyebrow">Sharing status</p>
-          <div className="stack">
-            <div className="summary-row">
-              <strong>Notifications</strong>
-              <span>{notifications.length}</span>
+      <div className="content-grid module-share-grid">
+        <Card className="share-hero">
+          <div className="share-hero-copy">
+            <StatusPill tone="accent">
+              <Share2 size={14} aria-hidden="true" />
+              Ready to share
+            </StatusPill>
+            <h3>{module.name}</h3>
+            <p>
+              Give students the code below or use direct sharing to notify a
+              specific class group.
+            </p>
+            <div className="share-code-display">{module.code}</div>
+            <div className="share-hero-actions">
+              <PrimaryButton onClick={() => setIsModalOpen(true)}>
+                <Share2 size={16} aria-hidden="true" />
+                Direct share
+              </PrimaryButton>
+              <SecondaryButton
+                onClick={() => navigate(`/modules/${module.id}`)}
+              >
+                <ArrowLeft size={16} aria-hidden="true" />
+                Back to module
+              </SecondaryButton>
             </div>
-            <div className="summary-row">
-              <strong>Direct sharing</strong>
-              <span>Available</span>
+          </div>
+
+          <div className="share-hero-visual">
+            <div className="share-step">
+              <strong>1</strong>
+              <span>Copy the code</span>
             </div>
-            <div className="summary-row">
-              <strong>Targeted send</strong>
-              <span>Enabled</span>
+            <div className="share-step">
+              <strong>2</strong>
+              <span>Send it to students</span>
+            </div>
+            <div className="share-step">
+              <strong>3</strong>
+              <span>Track who joined</span>
+            </div>
+            <div className="share-step highlight">
+              <strong>{module.students.length}</strong>
+              <span>active learners</span>
             </div>
           </div>
         </Card>
+
+        <div className="content-grid two-column">
+          <Card>
+            <p className="eyebrow">Sharing status</p>
+            <div className="stack">
+              <div className="summary-row">
+                <strong>Notifications</strong>
+                <span>{notifications.length}</span>
+              </div>
+              <div className="summary-row">
+                <strong>Direct sharing</strong>
+                <span>Available</span>
+              </div>
+              <div className="summary-row">
+                <strong>Targeted send</strong>
+                <span>Enabled</span>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <p className="eyebrow">Recipient overview</p>
+            <div className="stack">
+              <div className="summary-row">
+                <strong>Students in module</strong>
+                <span>{module.students.length}</span>
+              </div>
+              <div className="summary-row">
+                <strong>Searchable recipients</strong>
+                <span>{studentsSeed.length}</span>
+              </div>
+              <div className="summary-row">
+                <strong>Quick share mode</strong>
+                <span>List + direct send</span>
+              </div>
+            </div>
+          </Card>
+        </div>
       </div>
       {isModalOpen ? (
         <Modal
@@ -110,21 +172,23 @@ export default function ModuleSharePage({ moduleId }) {
               placeholder="Search by student name"
             />
           </Field>
-          <div className="student-select-list">
+          <ul className="student-select-list">
             {visibleStudents.map((student) => (
-              <label className="student-check" key={student.id}>
-                <input
-                  type="checkbox"
-                  checked={selectedStudents.includes(student.id)}
-                  onChange={() => toggleStudent(student.id)}
-                />
-                <span>
-                  <strong>{student.name}</strong>
-                  <small>{student.description}</small>
-                </span>
-              </label>
+              <li className="student-check" key={student.id}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={selectedStudents.includes(student.id)}
+                    onChange={() => toggleStudent(student.id)}
+                  />
+                  <span>
+                    <strong>{student.name}</strong>
+                    <small>{student.description}</small>
+                  </span>
+                </label>
+              </li>
             ))}
-          </div>
+          </ul>
         </Modal>
       ) : null}
     </PageShell>

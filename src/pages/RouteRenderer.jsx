@@ -19,6 +19,7 @@ const LazyResetPasswordPage = lazy(
 );
 const LazyTeacherHomePage = lazy(() => import("./TeacherHomePage.jsx"));
 const LazyDashboardPage = lazy(() => import("./DashboardPage.jsx"));
+const LazyNotificationsPage = lazy(() => import("./NotificationsPage.jsx"));
 const LazyCreateModulesPage = lazy(() => import("./CreateModulesPage.jsx"));
 const LazyModulesListPage = lazy(() => import("./ModulesListPage.jsx"));
 const LazyProfilePage = lazy(() => import("./ProfilePage.jsx"));
@@ -90,6 +91,12 @@ export function RouteRenderer() {
       return (
         <PageLoader>
           <LazyDashboardPage />
+        </PageLoader>
+      );
+    case "notifications":
+      return (
+        <PageLoader>
+          <LazyNotificationsPage />
         </PageLoader>
       );
     case "create":

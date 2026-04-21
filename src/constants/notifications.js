@@ -25,6 +25,7 @@ export const notificationsSeed = [
 export const teacherNav = [
   { path: "/", label: "Home" },
   { path: "/dashboard", label: "Dashboard" },
+  { path: "/notifications", label: "Notifications" },
   { path: "/create", label: "Create" },
   { path: "/modules", label: "Modules" },
   { path: "/profile", label: "Profile" },

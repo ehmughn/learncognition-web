@@ -1,9 +1,10 @@
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useApp } from "../../context/AppContext.jsx";
 import { PageShell } from "../../components/layout/PageShell.jsx";
 import { Card } from "../../components/ui/Card.jsx";
 import { Field, StatusPill } from "../../components/ui/Card.jsx";
-import { Input, Select, TextArea } from "../../components/ui/FormInputs.jsx";
+import { Select, TextArea } from "../../components/ui/FormInputs.jsx";
 import { PrimaryButton, SecondaryButton } from "../../components/ui/Button.jsx";
 import { Modal } from "../../components/ui/Modal.jsx";
 
@@ -102,13 +103,16 @@ export default function ModuleEditPage({ moduleId }) {
       title="Edit module content"
       actions={
         <>
-          <PrimaryButton onClick={addItem}>Add item</PrimaryButton>
+          <PrimaryButton onClick={addItem}>
+            <Plus size={16} aria-hidden="true" />
+            Add item
+          </PrimaryButton>
           <SecondaryButton onClick={() => navigate(`/modules/${moduleId}`)}>
+            <ArrowLeft size={16} aria-hidden="true" />
             Back to module
           </SecondaryButton>
         </>
       }
-      wide
     >
       <div className="editor-topbar">
         <Field label="Module type">
@@ -151,7 +155,7 @@ export default function ModuleEditPage({ moduleId }) {
                 onClick={() => setDeleteTarget(index)}
                 aria-label="Remove item"
               >
-                ×
+                <Trash2 size={16} aria-hidden="true" />
               </button>
             </div>
             <div className="editor-grid">

@@ -18,7 +18,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
-  padding: var(--space-xl);
+  padding: clamp(24px, 2.5vw, 36px);
   transition:
     box-shadow var(--transition-base),
     border-color var(--transition-base);
@@ -36,6 +36,12 @@
 
 .panel p {
   margin: var(--space-md) 0;
+}
+
+.side-note {
+  display: grid;
+  gap: var(--space-sm);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -514,7 +520,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-lg);
-  padding: var(--space-lg);
+  padding: var(--space-xl);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius);
   background: var(--bg);
@@ -678,4 +684,61 @@ tbody tr:last-child td {
   margin: 0;
   font-size: 0.9rem;
   line-height: var(--line-height-relaxed);
+}
+
+.stat-card-icon {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin-bottom: var(--space-xs);
+}
+
+.hero-actions,
+.share-hero-actions,
+.editor-actions,
+.topbar-actions,
+.form-actions,
+.modal-footer {
+  gap: var(--space-md);
+}
+
+.button > svg,
+.quick-link svg,
+.sidebar-link svg,
+.share-hero-actions svg,
+.notification-meta svg,
+.choice-button svg {
+  flex-shrink: 0;
+}
+
+.quick-link {
+  padding: var(--space-lg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: var(--surface);
+  transition:
+    transform var(--transition-fast),
+    background var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.quick-link:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+.loading-screen {
+  background:
+    radial-gradient(circle at top, rgba(192, 36, 26, 0.08), transparent 45%),
+    var(--surface);
 }
