@@ -43,8 +43,19 @@ function PageLoader({ children }) {
   return <Suspense fallback={<LoadingScreen />}>{children}</Suspense>;
 }
 
+function ProtectedRoute({ children }) {
+  const { session, navigate } = useApp();
+
+  if (!session.authenticated) {
+    navigate("/login", { replace: true });
+    return <LoadingScreen />;
+  }
+
+  return children;
+}
+
 export function RouteRenderer() {
-  const { route } = useApp();
+  const { route, workspaceLive, workspaceLoading } = useApp();
 
   switch (route.kind) {
     case "guest-landing":
@@ -84,79 +95,111 @@ export function RouteRenderer() {
     case "teacher-home":
       return (
         <PageLoader>
-          <LazyTeacherHomePage />
+          <ProtectedRoute>
+            <LazyTeacherHomePage />
+          </ProtectedRoute>
         </PageLoader>
       );
     case "dashboard":
       return (
         <PageLoader>
-          <LazyDashboardPage />
+          <ProtectedRoute>
+            <LazyDashboardPage />
+          </ProtectedRoute>
         </PageLoader>
       );
     case "notifications":
       return (
         <PageLoader>
-          <LazyNotificationsPage />
+          <ProtectedRoute>
+            <LazyNotificationsPage />
+          </ProtectedRoute>
         </PageLoader>
       );
     case "create":
       return (
         <PageLoader>
-          <LazyCreateModulesPage />
+          <ProtectedRoute>
+            <LazyCreateModulesPage />
+          </ProtectedRoute>
         </PageLoader>
       );
     case "modules":
       return (
         <PageLoader>
-          <LazyModulesListPage />
+          <ProtectedRoute>
+            <LazyModulesListPage />
+          </ProtectedRoute>
         </PageLoader>
       );
     case "profile":
       return (
         <PageLoader>
-          <LazyProfilePage />
+          <ProtectedRoute>
+            <LazyProfilePage />
+          </ProtectedRoute>
         </PageLoader>
       );
     case "settings":
       return (
         <PageLoader>
-          <LazySettingsPage />
+          <ProtectedRoute>
+            <LazySettingsPage />
+          </ProtectedRoute>
         </PageLoader>
       );
     case "module":
       return (
         <PageLoader>
-          <LazyModuleDetailPage moduleId={route.moduleId} />
+          <ProtectedRoute>
+            <LazyModuleDetailPage moduleId={route.moduleId} />
+          </ProtectedRoute>
         </PageLoader>
       );
     case "module-share":
       return (
         <PageLoader>
-          <LazyModuleSharePage moduleId={route.moduleId} />
+          <ProtectedRoute>
+            <LazyModuleSharePage
+              key={`${route.moduleId}-${workspaceLoading ? "loading" : "ready"}`}
+              moduleId={route.moduleId}
+            />
+          </ProtectedRoute>
         </PageLoader>
       );
     case "module-edit":
       return (
         <PageLoader>
-          <LazyModuleEditPage moduleId={route.moduleId} />
+          <ProtectedRoute>
+            <LazyModuleEditPage
+              key={`${route.moduleId}-${workspaceLoading ? "loading" : workspaceLive ? "live" : "fallback"}`}
+              moduleId={route.moduleId}
+            />
+          </ProtectedRoute>
         </PageLoader>
       );
     case "module-students":
       return (
         <PageLoader>
-          <LazyModuleStudentsPage moduleId={route.moduleId} />
+          <ProtectedRoute>
+            <LazyModuleStudentsPage moduleId={route.moduleId} />
+          </ProtectedRoute>
         </PageLoader>
       );
     case "student":
       return (
         <PageLoader>
-          <LazyStudentProfilePage studentId={route.studentId} />
+          <ProtectedRoute>
+            <LazyStudentProfilePage studentId={route.studentId} />
+          </ProtectedRoute>
         </PageLoader>
       );
     case "student-records":
       return (
         <PageLoader>
-          <LazyStudentRecordsPage studentId={route.studentId} />
+          <ProtectedRoute>
+            <LazyStudentRecordsPage studentId={route.studentId} />
+          </ProtectedRoute>
         </PageLoader>
       );
     default:

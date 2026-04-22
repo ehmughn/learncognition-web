@@ -6,55 +6,41 @@ import { Field } from "../../components/ui/Card.jsx";
 import { Input } from "../../components/ui/FormInputs.jsx";
 import { PrimaryButton } from "../../components/ui/Button.jsx";
 import { AppLink } from "../../components/ui/AppLink.jsx";
+import { signIn } from "../../services/auth.js";
 
 export default function LoginPage() {
-  const { navigate, setSession, setPendingFlow, showToast } = useApp();
-  const [email, setEmail] = useState("teacher@learncognition.com");
+  const { navigate, showToast } = useApp();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
     if (!email || !password) {
       showToast("Enter an email and password.");
       return;
     }
 
-    const normalizedEmail = email.toLowerCase();
-    const requiresVerification =
-      normalizedEmail.includes("admin") || normalizedEmail.includes("verify");
+    setLoading(true);
+    try {
+      const { session, error } = await signIn(email, password);
 
-    if (requiresVerification) {
-      setPendingFlow({
-        kind: "verify",
-        role: normalizedEmail.includes("admin") ? "admin" : "teacher",
-        email,
-        code: "4821936507",
-        purpose: normalizedEmail.includes("admin") ? "admin-owner" : "account",
-      });
-      setSession({
-        authenticated: false,
-        role: normalizedEmail.includes("admin") ? "admin" : "teacher",
-        name: normalizedEmail.includes("admin")
-          ? "Admin user"
-          : "Teacher account",
-        email,
-        verified: false,
-      });
-      showToast(`Verification code sent to ${email}.`);
-      navigate("/verify");
-      return;
+      if (error) {
+        showToast(error.message || "Login failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      if (session) {
+        showToast("Logged in successfully!");
+        // Navigation will happen automatically via auth state listener in App.jsx
+        navigate("/dashboard", { replace: true });
+      }
+    } catch (err) {
+      showToast(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
     }
-
-    setSession({
-      authenticated: true,
-      role: "teacher",
-      name: "Ari Santos",
-      email,
-      verified: true,
-    });
-    setPendingFlow(null);
-    navigate("/");
-    showToast("Logged in successfully.");
   };
 
   return (
@@ -93,9 +79,9 @@ export default function LoginPage() {
             Forgot password?
           </AppLink>
         </div>
-        <PrimaryButton type="submit" className="full-width">
+        <PrimaryButton type="submit" className="full-width" disabled={loading}>
           <LogIn size={16} aria-hidden="true" />
-          Log in
+          {loading ? "Logging in..." : "Log in"}
         </PrimaryButton>
       </form>
     </AuthShell>

@@ -35,6 +35,14 @@
     gap: var(--space-lg);
   }
 
+  .dashboard-api-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-supabase-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .page-body {
     gap: var(--space-lg);
   }
@@ -314,6 +322,26 @@
 
   .metric-card {
     padding: var(--space-lg);
+  }
+
+  .dashboard-supabase-grid,
+  .dashboard-weather-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-weather-value,
+  .dashboard-holiday-figure {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-supabase-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .model-preview-stage {
+    min-height: 240px;
   }
 
   .metric-card strong {
@@ -597,6 +625,19 @@
   .module-dashboard-layout,
   .editor-grid {
     grid-template-columns: 1fr;
+  }
+
+  .editor-field-wide {
+    grid-column: auto;
+  }
+
+  .model-preview-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .model-preview-meta span {
+    white-space: normal;
   }
 
   .landing-hero-card,

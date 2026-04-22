@@ -1,16 +1,14 @@
-import { modulesSeed } from "../constants/modules.js";
-import { studentsSeed } from "../constants/students.js";
-
-export function findModule(moduleId) {
-  return modulesSeed.find((item) => item.id === moduleId) ?? modulesSeed[0];
+export function findModule(moduleId, modules = []) {
+  return modules.find((item) => item.id === moduleId) ?? null;
 }
 
-export function findStudent(studentId) {
-  return studentsSeed.find((item) => item.id === studentId) ?? studentsSeed[0];
+export function findStudent(studentId, students = []) {
+  return students.find((item) => item.id === studentId) ?? null;
 }
 
-export function getModuleView(moduleId, drafts) {
-  const base = findModule(moduleId);
+export function getModuleView(moduleId, drafts, modules = []) {
+  const base = findModule(moduleId, modules);
+  if (!base) return null;
   const draft = drafts?.[moduleId];
   if (!draft) return base;
   return {

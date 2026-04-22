@@ -1,48 +1,92 @@
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import "@google/model-viewer";
 import { useApp } from "../../context/AppContext.jsx";
 import { PageShell } from "../../components/layout/PageShell.jsx";
-import { Card } from "../../components/ui/Card.jsx";
-import { Field, StatusPill } from "../../components/ui/Card.jsx";
+import { Card, Field, StatusPill } from "../../components/ui/Card.jsx";
 import { Select, TextArea } from "../../components/ui/FormInputs.jsx";
 import { PrimaryButton, SecondaryButton } from "../../components/ui/Button.jsx";
 import { Modal } from "../../components/ui/Modal.jsx";
+import { getIdentifyModelAsset } from "../../constants/modelAssets.js";
 
-export default function ModuleEditPage({ moduleId }) {
-  const {
-    navigate,
-    getModuleView,
-    moduleDrafts,
-    setModuleDrafts,
-    pendingFlow,
-    setPendingFlow,
-    showToast,
-  } = useApp();
-  const baseModule = getModuleView(moduleId, moduleDrafts);
-  const [moduleType, setModuleType] = useState(
-    pendingFlow?.kind === "draft-module" ? pendingFlow.type : baseModule.type,
-  );
-  const [items, setItems] = useState(() => {
-    if (
-      pendingFlow?.kind === "draft-module" &&
-      pendingFlow.moduleId === moduleId
-    ) {
-      return pendingFlow.items ?? [];
-    }
-    return baseModule.items.map((item) => ({ ...item }));
-  });
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [dragIndex, setDragIndex] = useState(null);
+function IdentifyModelPreview({ label }) {
+  const asset = getIdentifyModelAsset(label);
+  const viewerRef = useRef(null);
 
   useEffect(() => {
-    if (
-      pendingFlow?.kind === "draft-module" &&
-      pendingFlow.moduleId === moduleId
-    ) {
-      setModuleType(pendingFlow.type);
-      setItems(pendingFlow.items ?? []);
-    }
-  }, [pendingFlow, moduleId]);
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+
+    viewer.src = asset.src;
+    viewer.alt = `${label} preview rendered with ${asset.title}`;
+    viewer.cameraControls = true;
+    viewer.autoRotate = true;
+    viewer.interactionPrompt = "none";
+    viewer.shadowIntensity = 1;
+    viewer.toneMapping = "aces";
+    viewer.exposure = 1;
+    viewer.cameraOrbit = "45deg 70deg 2.8m";
+    viewer.minCameraOrbit = "auto auto 1.6m";
+    viewer.maxCameraOrbit = "auto auto 5m";
+    viewer.disableZoom = true;
+  }, [asset.src, asset.title, label]);
+
+  return (
+    <div className="model-preview">
+      <div className="model-preview-stage">
+        <model-viewer ref={viewerRef} className="model-viewer" />
+      </div>
+      <div className="model-preview-meta">
+        <div>
+          <p className="eyebrow">Rendered preview</p>
+          <strong>{label}</strong>
+        </div>
+        <span>{asset.title}</span>
+      </div>
+      <p className="model-preview-note">{asset.note}</p>
+    </div>
+  );
+}
+
+export default function ModuleEditPage({ moduleId }) {
+  const { navigate, getModuleView, saveModule, showToast, workspaceSummary } =
+    useApp();
+  const baseModule = getModuleView(moduleId);
+  const [moduleType, setModuleType] = useState(baseModule?.type ?? "identify");
+  const [items, setItems] = useState(
+    () => baseModule?.items.map((item) => ({ ...item })) ?? [],
+  );
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [dragIndex, setDragIndex] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  if (!baseModule) {
+    return (
+      <PageShell
+        eyebrow={`Module / ${moduleId} / Edit`}
+        title={workspaceSummary.live ? "Module unavailable" : "Loading module"}
+        actions={
+          <SecondaryButton onClick={() => navigate(`/modules/${moduleId}`)}>
+            <ArrowLeft size={16} aria-hidden="true" />
+            Back to module
+          </SecondaryButton>
+        }
+      >
+        <Card className="empty-state">
+          <h3>
+            {workspaceSummary.live
+              ? "No module found"
+              : "Loading from Supabase"}
+          </h3>
+          <p>
+            {workspaceSummary.live
+              ? "This module is not present in the current Supabase workspace data."
+              : "Waiting for the workspace rows to finish loading."}
+          </p>
+        </Card>
+      </PageShell>
+    );
+  }
 
   const updateItem = (index, field, value) => {
     setItems((current) =>
@@ -81,18 +125,26 @@ export default function ModuleEditPage({ moduleId }) {
     });
   };
 
-  const saveChanges = () => {
-    setModuleDrafts((current) => ({
-      ...current,
-      [moduleId]: { type: moduleType, items },
-    }));
-    setPendingFlow(null);
-    navigate(`/modules/${moduleId}`);
-    showToast("Module saved.");
+  const saveChanges = async () => {
+    setIsSaving(true);
+    try {
+      await saveModule({
+        ...baseModule,
+        type: moduleType,
+        items,
+      });
+      navigate(`/modules/${moduleId}`);
+      showToast("Module saved.");
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Unable to save module.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const cancelChanges = () => {
-    setPendingFlow(null);
     navigate(`/modules/${moduleId}`);
     showToast("Edits discarded.");
   };
@@ -177,24 +229,20 @@ export default function ModuleEditPage({ moduleId }) {
                 </Select>
               </Field>
               {moduleType === "identify" ? (
-                <div className="model-preview">
-                  <div className="model-shape" aria-hidden="true">
-                    <span />
-                  </div>
-                  <strong>{item.label}</strong>
-                  <p>Rendered model preview for the selected object.</p>
-                </div>
+                <IdentifyModelPreview label={item.label} />
               ) : null}
-              <Field label="Description">
-                <TextArea
-                  rows="3"
-                  value={item.description}
-                  onChange={(event) =>
-                    updateItem(index, "description", event.target.value)
-                  }
-                  placeholder="Write the item description"
-                />
-              </Field>
+              <div className="editor-field-wide">
+                <Field label="Description">
+                  <TextArea
+                    rows="3"
+                    value={item.description}
+                    onChange={(event) =>
+                      updateItem(index, "description", event.target.value)
+                    }
+                    placeholder="Write the item description"
+                  />
+                </Field>
+              </div>
             </div>
             <div className="drag-hints">
               <span>Drag card to reorder</span>
@@ -205,7 +253,9 @@ export default function ModuleEditPage({ moduleId }) {
       </div>
       <div className="editor-actions">
         <SecondaryButton onClick={cancelChanges}>Cancel</SecondaryButton>
-        <PrimaryButton onClick={saveChanges}>Save changes</PrimaryButton>
+        <PrimaryButton onClick={saveChanges} disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save changes"}
+        </PrimaryButton>
       </div>
       {deleteTarget != null ? (
         <Modal
@@ -220,7 +270,7 @@ export default function ModuleEditPage({ moduleId }) {
             </>
           }
         >
-          <p>This action removes the item from the current module draft.</p>
+          <p>This action removes the item from the current module.</p>
         </Modal>
       ) : null}
     </PageShell>

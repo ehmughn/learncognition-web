@@ -13,8 +13,34 @@ import { Card, StatusPill } from "../../components/ui/Card.jsx";
 import { PrimaryButton, SecondaryButton } from "../../components/ui/Button.jsx";
 
 export default function ModuleDetailPage({ moduleId }) {
-  const { navigate, getModuleView, moduleDrafts } = useApp();
-  const module = getModuleView(moduleId, moduleDrafts);
+  const { navigate, getModuleView, workspaceSummary } = useApp();
+  const module = getModuleView(moduleId);
+  if (!module) {
+    return (
+      <PageShell
+        eyebrow={`Module / ${moduleId}`}
+        title={workspaceSummary.live ? "Module unavailable" : "Loading module"}
+        actions={
+          <SecondaryButton onClick={() => navigate("/modules")}>
+            Back to modules
+          </SecondaryButton>
+        }
+      >
+        <Card className="empty-state">
+          <h3>
+            {workspaceSummary.live
+              ? "No module found"
+              : "Loading from Supabase"}
+          </h3>
+          <p>
+            {workspaceSummary.live
+              ? "This module is not present in the current Supabase workspace data."
+              : "Waiting for the workspace rows to finish loading."}
+          </p>
+        </Card>
+      </PageShell>
+    );
+  }
   const progressRows = [
     {
       label: "Scanned",

@@ -7,22 +7,49 @@ import { Field } from "../../components/ui/Card.jsx";
 import { Input } from "../../components/ui/FormInputs.jsx";
 import { PrimaryButton, SecondaryButton } from "../../components/ui/Button.jsx";
 import { Modal } from "../../components/ui/Modal.jsx";
-import { studentsSeed } from "../../constants/students.js";
 
 export default function ModuleSharePage({ moduleId }) {
   const {
     navigate,
     getModuleView,
-    moduleDrafts,
+    students,
     notifications,
     addNotification,
     showToast,
+    workspaceSummary,
   } = useApp();
-  const module = getModuleView(moduleId, moduleDrafts);
+  const module = getModuleView(moduleId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudents, setSelectedStudents] = useState([]);
-  const visibleStudents = studentsSeed.filter((student) =>
+  if (!module) {
+    return (
+      <PageShell
+        eyebrow={`Module / ${moduleId} / Share`}
+        title={workspaceSummary.live ? "Module unavailable" : "Loading module"}
+        actions={
+          <SecondaryButton onClick={() => navigate("/modules")}>
+            <ArrowLeft size={16} aria-hidden="true" />
+            Back to modules
+          </SecondaryButton>
+        }
+      >
+        <Card className="empty-state">
+          <h3>
+            {workspaceSummary.live
+              ? "No module found"
+              : "Loading from Supabase"}
+          </h3>
+          <p>
+            {workspaceSummary.live
+              ? "This module is not present in the current Supabase workspace data."
+              : "Waiting for the workspace rows to finish loading."}
+          </p>
+        </Card>
+      </PageShell>
+    );
+  }
+  const visibleStudents = students.filter((student) =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
@@ -39,7 +66,7 @@ export default function ModuleSharePage({ moduleId }) {
       showToast("Select at least one student to share with.");
       return;
     }
-    const selectedNames = studentsSeed
+    const selectedNames = students
       .filter((student) => selectedStudents.includes(student.id))
       .map((student) => student.name);
     addNotification(
@@ -142,7 +169,7 @@ export default function ModuleSharePage({ moduleId }) {
               </div>
               <div className="summary-row">
                 <strong>Searchable recipients</strong>
-                <span>{studentsSeed.length}</span>
+                <span>{students.length}</span>
               </div>
               <div className="summary-row">
                 <strong>Quick share mode</strong>

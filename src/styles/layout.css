@@ -62,7 +62,7 @@
 .brand-label,
 .guest-brand strong {
   font-family: var(--font-body);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text);

@@ -5,18 +5,8 @@ import { Card, StatusPill } from "../components/ui/Card.jsx";
 import { PrimaryButton, SecondaryButton } from "../components/ui/Button.jsx";
 
 export default function NotificationsPage() {
-  const { notifications, setNotifications, showToast, navigate } = useApp();
+  const { notifications, markAllNotificationsRead, navigate } = useApp();
   const unreadCount = notifications.filter((item) => !item.read).length;
-
-  const markAllRead = () => {
-    setNotifications((current) =>
-      current.map((item) => ({
-        ...item,
-        read: true,
-      })),
-    );
-    showToast("All notifications marked as read.");
-  };
 
   return (
     <PageShell
@@ -24,7 +14,10 @@ export default function NotificationsPage() {
       title="Notifications"
       actions={
         <>
-          <SecondaryButton onClick={markAllRead} disabled={unreadCount === 0}>
+          <SecondaryButton
+            onClick={markAllNotificationsRead}
+            disabled={unreadCount === 0}
+          >
             <CheckCheck size={16} aria-hidden="true" />
             Mark all read
           </SecondaryButton>

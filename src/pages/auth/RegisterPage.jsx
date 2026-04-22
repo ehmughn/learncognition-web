@@ -5,38 +5,48 @@ import { AuthShell } from "../../components/layout/AuthShell.jsx";
 import { Field } from "../../components/ui/Card.jsx";
 import { Input } from "../../components/ui/FormInputs.jsx";
 import { PrimaryButton } from "../../components/ui/Button.jsx";
-import { makeCode } from "../../utils/formatting.js";
+import { signUp } from "../../services/auth.js";
 
 export default function RegisterPage() {
-  const { navigate, setSession, setPendingFlow, showToast } = useApp();
+  const { navigate, showToast } = useApp();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
     if (!name || !email || !password) {
       showToast("Fill out all registration fields.");
       return;
     }
-    const code = makeCode();
-    setSession({
-      authenticated: false,
-      role: "teacher",
-      name,
-      email,
-      verified: false,
-    });
-    setPendingFlow({
-      kind: "verify",
-      role: "teacher",
-      email,
-      code,
-      purpose: "registration",
-      name,
-    });
-    showToast(`A verification code was sent to ${email}.`);
-    navigate("/verify");
+
+    if (password.length < 8) {
+      showToast("Password must be at least 8 characters long.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { user, error } = await signUp(email, password, name);
+
+      if (error) {
+        showToast(error.message || "Registration failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      if (user) {
+        showToast(
+          "Account created! Check your email to confirm your account, then log in.",
+        );
+        navigate("/login", { replace: true });
+      }
+    } catch (err) {
+      showToast(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,9 +83,9 @@ export default function RegisterPage() {
             placeholder="Choose a strong password"
           />
         </Field>
-        <PrimaryButton type="submit" className="full-width">
+        <PrimaryButton type="submit" className="full-width" disabled={loading}>
           <UserPlus size={16} aria-hidden="true" />
-          Register
+          {loading ? "Registering..." : "Register"}
         </PrimaryButton>
       </form>
     </AuthShell>

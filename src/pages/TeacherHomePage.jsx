@@ -1,11 +1,8 @@
 import {
   ArrowRight,
-  BadgeCheck,
-  BarChart3,
   Bell,
   BookOpen,
   ChevronRight,
-  Clock3,
   LayoutDashboard,
   Sparkles,
 } from "lucide-react";
@@ -15,9 +12,6 @@ import { Card, StatusPill } from "../components/ui/Card.jsx";
 import { PrimaryButton, SecondaryButton } from "../components/ui/Button.jsx";
 import { AppLink } from "../components/ui/AppLink.jsx";
 import { MetricStrip } from "../components/ui/MetricStrip.jsx";
-import { modulesSeed } from "../constants/modules.js";
-import { chartBars } from "../constants/notifications.js";
-import { studentsSeed } from "../constants/students.js";
 import { shortDescription } from "../utils/formatting.js";
 
 const quickActions = [
@@ -48,24 +42,33 @@ const quickActions = [
 ];
 
 export default function TeacherHomePage() {
-  const { navigate, notifications, session } = useApp();
-  const averageScore = Math.round(
-    modulesSeed.reduce((sum, module) => sum + module.stats.averageScore, 0) /
-      modulesSeed.length,
-  );
-  const activeModule = modulesSeed[0];
+  const {
+    navigate,
+    notifications,
+    modules,
+    students,
+    profile,
+    session,
+    workspaceSummary,
+  } = useApp();
   const unreadCount = notifications.filter((item) => !item.read).length;
   const homeMetrics = [
-    { value: `${modulesSeed.length}`, label: "Active modules" },
-    { value: `${studentsSeed.length}`, label: "Students enrolled" },
-    { value: `${averageScore}%`, label: "Average score" },
+    {
+      value: `${workspaceSummary.modulesCount ?? modules.length}`,
+      label: "Active modules",
+    },
+    {
+      value: `${workspaceSummary.learnersCount ?? students.length}`,
+      label: "Students enrolled",
+    },
+    { value: `${workspaceSummary.averageScore ?? 0}%`, label: "Average score" },
     { value: `${unreadCount}`, label: "Unread updates" },
   ];
 
   return (
     <PageShell
       eyebrow="Teacher home"
-      title={`Welcome back, ${session.name || "teacher"}.`}
+      title={`Welcome back, ${profile.name || session.name || "teacher"}.`}
       actions={
         <>
           <PrimaryButton onClick={() => navigate("/dashboard")}>
@@ -86,9 +89,7 @@ export default function TeacherHomePage() {
               <Sparkles size={14} aria-hidden="true" />
               Classroom workspace
             </p>
-            <h2>
-              Manage modules with the same polished tone as the landing page.
-            </h2>
+            <h2>Welcome to the teacher dashboard.</h2>
             <p className="home-hero-subtitle">
               Keep track of active modules, student progress, and notifications
               from one calm overview that feels consistent with the marketing
@@ -149,49 +150,77 @@ export default function TeacherHomePage() {
 
         <Card>
           <p className="eyebrow">Recent activity</p>
-          <div className="stack">
-            {notifications.slice(0, 4).map((item) => (
-              <div className="activity-row" key={item.id}>
-                <div>
-                  <strong>{item.title}</strong>
-                  <p>{item.message}</p>
+          {notifications.length ? (
+            <div className="stack">
+              {notifications.slice(0, 4).map((item) => (
+                <div className="activity-row" key={item.id}>
+                  <div>
+                    <strong>{item.title}</strong>
+                    <p>{item.message}</p>
+                  </div>
+                  <StatusPill tone={item.read ? "neutral" : "accent"}>
+                    {item.time}
+                  </StatusPill>
                 </div>
-                <StatusPill tone={item.read ? "neutral" : "accent"}>
-                  {item.time}
-                </StatusPill>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <h3>
+                {workspaceSummary.live
+                  ? "No notifications yet"
+                  : "Loading notifications"}
+              </h3>
+              <p>
+                {workspaceSummary.live
+                  ? "Workspace notifications stored in Supabase will appear here."
+                  : "Waiting for notification rows to sync from Supabase."}
+              </p>
+            </div>
+          )}
         </Card>
 
         <Card>
           <p className="eyebrow">Top modules</p>
-          <div className="stack">
-            {modulesSeed.map((module) => (
-              <button
-                key={module.id}
-                type="button"
-                className="list-card home-list-card"
-                onClick={() => navigate(`/modules/${module.id}`)}
-              >
-                <div>
-                  <div className="list-topline">
-                    <strong>{module.name}</strong>
-                    <StatusPill
-                      tone={module.type === "identify" ? "accent" : "neutral"}
-                    >
-                      {module.type}
-                    </StatusPill>
+          {modules.length ? (
+            <div className="stack">
+              {modules.map((module) => (
+                <button
+                  key={module.id}
+                  type="button"
+                  className="list-card home-list-card"
+                  onClick={() => navigate(`/modules/${module.id}`)}
+                >
+                  <div>
+                    <div className="list-topline">
+                      <strong>{module.name}</strong>
+                      <StatusPill
+                        tone={module.type === "identify" ? "accent" : "neutral"}
+                      >
+                        {module.type}
+                      </StatusPill>
+                    </div>
+                    <p>{shortDescription(module.description, 48)}</p>
                   </div>
-                  <p>{shortDescription(module.description, 48)}</p>
-                </div>
-                <div className="list-metrics">
-                  <span>{module.stats.averageScore}% avg</span>
-                  <span>{module.students.length} students</span>
-                </div>
-              </button>
-            ))}
-          </div>
+                  <div className="list-metrics">
+                    <span>{module.stats.averageScore}% avg</span>
+                    <span>{module.students.length} students</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <h3>
+                {workspaceSummary.live ? "No modules yet" : "Loading modules"}
+              </h3>
+              <p>
+                {workspaceSummary.live
+                  ? "Create modules in Supabase to fill this list."
+                  : "Waiting for module rows to sync from Supabase."}
+              </p>
+            </div>
+          )}
         </Card>
 
         <Card className="home-spotlight-card home-wide-card">
@@ -204,27 +233,40 @@ export default function TeacherHomePage() {
             </p>
           </div>
 
-          <div className="home-spotlight-grid">
-            {studentsSeed.slice(0, 3).map((student) => (
-              <div className="home-spotlight-item" key={student.id}>
-                <div className="home-spotlight-top">
-                  <div>
-                    <strong>{student.name}</strong>
-                    <p>{shortDescription(student.description, 54)}</p>
+          {students.length ? (
+            <div className="home-spotlight-grid">
+              {students.slice(0, 3).map((student) => (
+                <div className="home-spotlight-item" key={student.id}>
+                  <div className="home-spotlight-top">
+                    <div>
+                      <strong>{student.name}</strong>
+                      <p>{shortDescription(student.description, 54)}</p>
+                    </div>
+                    <StatusPill
+                      tone={student.score == null ? "neutral" : "accent"}
+                    >
+                      {student.score == null ? "Pending" : `${student.score}%`}
+                    </StatusPill>
                   </div>
-                  <StatusPill
-                    tone={student.score == null ? "neutral" : "accent"}
-                  >
-                    {student.score == null ? "Pending" : `${student.score}%`}
-                  </StatusPill>
+                  <div className="home-spotlight-meta">
+                    <span>{student.modulesTaken.length} modules taken</span>
+                    <span>{student.records[0]?.module || "No module yet"}</span>
+                  </div>
                 </div>
-                <div className="home-spotlight-meta">
-                  <span>{student.modulesTaken.length} modules taken</span>
-                  <span>{student.records[0]?.module || "No module yet"}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <h3>
+                {workspaceSummary.live ? "No students yet" : "Loading students"}
+              </h3>
+              <p>
+                {workspaceSummary.live
+                  ? "Add student rows to Supabase to populate this spotlight."
+                  : "Waiting for student rows to sync from Supabase."}
+              </p>
+            </div>
+          )}
         </Card>
       </div>
     </PageShell>

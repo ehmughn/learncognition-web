@@ -25,25 +25,28 @@ export function resolveRoute(pathname, isAuthenticated) {
   if (path === "/settings") return { kind: "settings" };
 
   const routes = [
-    [/^\/modules\/(\d+)$/, (match) => ({ kind: "module", moduleId: match[1] })],
     [
-      /^\/modules\/(\d+)\/share$/,
+      /^\/modules\/([^/]+)\/share$/,
       (match) => ({ kind: "module-share", moduleId: match[1] }),
     ],
     [
-      /^\/modules\/(\d+)\/edit$/,
+      /^\/modules\/([^/]+)\/edit$/,
       (match) => ({ kind: "module-edit", moduleId: match[1] }),
     ],
     [
-      /^\/modules\/(\d+)\/students$/,
+      /^\/modules\/([^/]+)\/students$/,
       (match) => ({ kind: "module-students", moduleId: match[1] }),
     ],
     [
-      /^\/student\/(\d+)$/,
+      /^\/modules\/([^/]+)$/,
+      (match) => ({ kind: "module", moduleId: match[1] }),
+    ],
+    [
+      /^\/student\/([^/]+)$/,
       (match) => ({ kind: "student", studentId: match[1] }),
     ],
     [
-      /^\/students\/(\d+)\/records$/,
+      /^\/students\/([^/]+)\/records$/,
       (match) => ({ kind: "student-records", studentId: match[1] }),
     ],
   ];

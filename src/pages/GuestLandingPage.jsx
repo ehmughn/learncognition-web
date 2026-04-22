@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -13,11 +14,45 @@ import {
 import { AppLink } from "../components/ui/AppLink.jsx";
 import { Card } from "../components/ui/Card.jsx";
 import { MetricStrip } from "../components/ui/MetricStrip.jsx";
+import { guestHighlights } from "../constants/notifications.js";
 import {
-  chartBars,
-  guestHighlights,
-  landingMetrics,
-} from "../constants/notifications.js";
+  createDefaultWorkspaceState,
+  loadWorkspaceData,
+} from "../services/workspace.js";
+
+function buildLandingMetrics(summary) {
+  return [
+    { value: `${summary.modulesCount}`, label: "Live modules" },
+    { value: `${summary.learnersCount}`, label: "Students" },
+    { value: `${summary.sessionsCount}`, label: "Sessions" },
+    { value: `${summary.averageScore}%`, label: "Avg score" },
+  ];
+}
+
+function buildLandingBars(summary) {
+  const values = [
+    summary.modulesCount,
+    summary.learnersCount,
+    summary.sectionsCount,
+    summary.activitiesCount,
+    summary.sessionsCount,
+    summary.averageScore,
+  ];
+  const max = Math.max(...values, 1);
+
+  return values.map((value) =>
+    value > 0 ? Math.max(14, Math.round((value / max) * 100)) : 0,
+  );
+}
+
+const landingLabels = [
+  "Modules",
+  "Students",
+  "Sections",
+  "Activities",
+  "Sessions",
+  "Score",
+];
 
 const featureCards = [
   {
@@ -119,6 +154,34 @@ const footerColumns = [
 ];
 
 export default function GuestLandingPage() {
+  const [workspaceSummary, setWorkspaceSummary] = useState(
+    () => createDefaultWorkspaceState().summary,
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPreviewSummary() {
+      const nextWorkspace = await loadWorkspaceData();
+      if (!isMounted) return;
+
+      setWorkspaceSummary(nextWorkspace.summary);
+    }
+
+    loadPreviewSummary().catch(() => {
+      if (isMounted) {
+        setWorkspaceSummary(createDefaultWorkspaceState().summary);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const landingMetrics = buildLandingMetrics(workspaceSummary);
+  const chartBars = buildLandingBars(workspaceSummary);
+
   return (
     <div className="landing-shell">
       <div className="landing-orb landing-orb-a" />
@@ -227,27 +290,33 @@ export default function GuestLandingPage() {
                           <p className="eyebrow">Teacher dashboard</p>
                           <h3>Live overview</h3>
                         </div>
-                        <span className="status-pill accent">Running</span>
+                        <span className="status-pill accent">
+                          {workspaceSummary.live ? "Live" : "Loading"}
+                        </span>
                       </div>
 
                       <div className="landing-bars" aria-hidden="true">
                         {chartBars.map((bar, index) => (
-                          <span key={index} style={{ height: `${bar}%` }} />
+                          <span
+                            key={landingLabels[index]}
+                            style={{ height: `${bar}%` }}
+                            title={landingLabels[index]}
+                          />
                         ))}
                       </div>
 
                       <div className="landing-mini-grid">
                         <div className="landing-mini-card">
-                          <strong>10-digit</strong>
-                          <span>share code</span>
+                          <strong>{workspaceSummary.modulesCount}</strong>
+                          <span>modules</span>
                         </div>
                         <div className="landing-mini-card">
-                          <strong>Live</strong>
-                          <span>progress sync</span>
+                          <strong>{workspaceSummary.learnersCount}</strong>
+                          <span>students</span>
                         </div>
                         <div className="landing-mini-card">
-                          <strong>AR + Search</strong>
-                          <span>activity modes</span>
+                          <strong>{workspaceSummary.sessionsCount}</strong>
+                          <span>sessions</span>
                         </div>
                       </div>
                     </div>

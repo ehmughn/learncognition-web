@@ -5,14 +5,20 @@ import { Card } from "../components/ui/Card.jsx";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 
 export default function CreateModulesPage() {
-  const { navigate, setPendingFlow, showToast } = useApp();
+  const { navigate, createModule, showToast } = useApp();
 
-  const chooseModule = (type) => {
-    setPendingFlow({ kind: "draft-module", moduleId: "1", type, items: [] });
-    showToast(
-      `${type === "identify" ? "Identify" : "Search"} module draft created.`,
-    );
-    navigate("/modules/1/edit");
+  const chooseModule = async (type) => {
+    try {
+      const module = await createModule(type);
+      showToast(
+        `${module.type === "identify" ? "Identify" : "Search"} module created.`,
+      );
+      navigate(`/modules/${module.id}/edit`);
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Unable to create module.",
+      );
+    }
   };
 
   return (

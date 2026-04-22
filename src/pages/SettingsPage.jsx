@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useApp } from "../context/AppContext.jsx";
 import { PageShell } from "../components/layout/PageShell.jsx";
 import { Card } from "../components/ui/Card.jsx";
@@ -6,24 +5,7 @@ import { Field } from "../components/ui/Card.jsx";
 import { Select } from "../components/ui/FormInputs.jsx";
 
 export default function SettingsPage() {
-  const { navigate } = useApp();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [sharingEnabled, setSharingEnabled] = useState(true);
-  const [themeMode, setThemeMode] = useState(() => {
-    if (typeof document !== "undefined") {
-      return document.documentElement.getAttribute("data-theme") || "light";
-    }
-    return "light";
-  });
-
-  const handleThemeChange = (event) => {
-    const newTheme = event.target.value;
-    setThemeMode(newTheme);
-    if (typeof document !== "undefined") {
-      document.documentElement.setAttribute("data-theme", newTheme);
-      localStorage.setItem("app-theme", newTheme);
-    }
-  };
+  const { settings, updateSettings } = useApp();
 
   return (
     <PageShell eyebrow="Settings" title="Settings">
@@ -35,9 +17,12 @@ export default function SettingsPage() {
               <span>Notifications</span>
               <input
                 type="checkbox"
-                checked={notificationsEnabled}
+                checked={settings.notificationsEnabled}
                 onChange={(event) =>
-                  setNotificationsEnabled(event.target.checked)
+                  updateSettings({
+                    ...settings,
+                    notificationsEnabled: event.target.checked,
+                  })
                 }
               />
             </label>
@@ -45,12 +30,25 @@ export default function SettingsPage() {
               <span>Direct sharing</span>
               <input
                 type="checkbox"
-                checked={sharingEnabled}
-                onChange={(event) => setSharingEnabled(event.target.checked)}
+                checked={settings.sharingEnabled}
+                onChange={(event) =>
+                  updateSettings({
+                    ...settings,
+                    sharingEnabled: event.target.checked,
+                  })
+                }
               />
             </label>
-            <Field label="Theme" hint="Static prototype choice">
-              <Select value={themeMode} onChange={handleThemeChange}>
+            <Field label="Theme" hint="Stored in Supabase">
+              <Select
+                value={settings.themeMode}
+                onChange={(event) =>
+                  updateSettings({
+                    ...settings,
+                    themeMode: event.target.value,
+                  })
+                }
+              >
                 <option value="light">Light</option>
                 <option value="dark">Dark</option>
               </Select>
@@ -62,15 +60,15 @@ export default function SettingsPage() {
           <div className="stack">
             <div className="summary-row">
               <strong>App status</strong>
-              <span>Healthy</span>
+              <span>Synced</span>
             </div>
             <div className="summary-row">
               <strong>Sync</strong>
-              <span>Auto-save enabled</span>
+              <span>Saved to Supabase</span>
             </div>
             <div className="summary-row">
               <strong>Version</strong>
-              <span>Static prototype</span>
+              <span>Workspace-backed prototype</span>
             </div>
           </div>
         </Card>
