@@ -49,6 +49,7 @@ function normalizeModule(row) {
     description: row.description ?? "",
     type: row.type ?? "identify",
     code: row.code ?? makeCode(),
+    ownerId: row.owner_id ?? row.ownerId ?? null,
     sortOrder: parseNumber(row.sort_order ?? row.sortOrder),
     stats: {
       items: parseNumber(
@@ -156,6 +157,7 @@ function toModuleRow(module) {
     description: module.description,
     type: module.type,
     code: module.code,
+    owner_id: module.ownerId ?? module.owner_id ?? null,
     stats: module.stats,
     items: module.items,
     student_ids: module.students ?? [],
@@ -246,6 +248,47 @@ async function loadSingleRowViaRPC(rpcName, fallbackRow, normalize) {
   }
 }
 
+async function getCurrentUserId() {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  return data?.user?.id ?? null;
+}
+
+async function loadOwnedModules(normalize) {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      return { rows: [], live: true };
+    }
+
+    const { data, error } = await supabase
+      .from(MODULE_TABLE)
+      .select("*")
+      .eq("owner_id", userId)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    return {
+      rows: Array.isArray(data) ? data.map(normalize).filter(Boolean) : [],
+      live: true,
+    };
+  } catch {
+    try {
+      const { data, error } = await supabase.rpc("get_workspace_modules");
+      if (error) throw error;
+
+      const rows = Array.isArray(data)
+        ? data.map(normalize).filter(Boolean)
+        : [];
+      return { rows, live: true };
+    } catch {
+      return { rows: [], live: false };
+    }
+  }
+}
+
 export function createDefaultWorkspaceState() {
   const modules = [];
   const students = [];
@@ -262,7 +305,26 @@ export function createDefaultWorkspaceState() {
   };
 }
 
+async function loadWorkspaceProfile(userId) {
+  return loadSingleRowViaRPC(
+    "get_workspace_profile",
+    { ...defaultWorkspaceProfile, id: userId },
+    normalizeProfile,
+  );
+}
+
+async function loadWorkspaceSettings(userId) {
+  return loadSingleRowViaRPC(
+    "get_workspace_settings",
+    { ...defaultWorkspaceSettings, id: userId },
+    normalizeSettings,
+  );
+}
+
 export async function loadWorkspaceData() {
+  const userId = await getCurrentUserId();
+  if (!userId) return createDefaultWorkspaceState();
+
   const [
     modulesResult,
     studentsResult,
@@ -270,19 +332,11 @@ export async function loadWorkspaceData() {
     profileResult,
     settingsResult,
   ] = await Promise.all([
-    loadRowsViaRPC("get_workspace_modules", normalizeModule),
+    loadOwnedModules(normalizeModule),
     loadRowsViaRPC("get_workspace_students", normalizeStudent),
     loadRowsViaRPC("get_workspace_notifications", normalizeNotification),
-    loadSingleRowViaRPC(
-      "get_workspace_profile",
-      defaultWorkspaceProfile,
-      normalizeProfile,
-    ),
-    loadSingleRowViaRPC(
-      "get_workspace_settings",
-      defaultWorkspaceSettings,
-      normalizeSettings,
-    ),
+    loadWorkspaceProfile(userId),
+    loadWorkspaceSettings(userId),
   ]);
 
   const modules = modulesResult.rows;
@@ -320,23 +374,38 @@ export async function loadWorkspaceData() {
 
 export async function saveWorkspaceModule(module) {
   const payload = toModuleRow(module);
-  const { error } = await supabase.rpc("update_workspace_module", {
-    p_id: payload.id,
-    p_name: payload.name,
-    p_description: payload.description,
-    p_type: payload.type,
-    p_code: payload.code,
-    p_stats: payload.stats,
-    p_items: payload.items,
-    p_student_ids: payload.student_ids,
-    p_sort_order: payload.sort_order,
-  });
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    throw new Error("You must be signed in to save modules.");
+  }
+
+  const { data, error } = await supabase
+    .from(MODULE_TABLE)
+    .upsert(
+      {
+        ...payload,
+        owner_id: userId,
+      },
+      { onConflict: "id" },
+    )
+    .select()
+    .single();
   if (error) throw error;
 
-  return { ...module, updatedAt: payload.updated_at };
+  const savedRow = Array.isArray(data) ? data[0] : data;
+  if (!savedRow) {
+    throw new Error("Module not found or you do not own it.");
+  }
+
+  return normalizeModule(savedRow);
 }
 
 export async function createWorkspaceModule(type) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    throw new Error("You must be signed in to create modules.");
+  }
+
   const nextModule = {
     id:
       typeof crypto !== "undefined" && crypto.randomUUID
@@ -358,17 +427,22 @@ export async function createWorkspaceModule(type) {
     students: [],
   };
 
-  const { error } = await supabase.rpc("create_workspace_module", {
-    p_id: nextModule.id,
-    p_name: nextModule.name,
-    p_code: nextModule.code,
-    p_type: nextModule.type,
-    p_description: nextModule.description,
-    p_sort_order: nextModule.sortOrder,
-  });
+  const { data, error } = await supabase
+    .from(MODULE_TABLE)
+    .insert({
+      ...toModuleRow(nextModule),
+      owner_id: userId,
+    })
+    .select()
+    .single();
   if (error) throw error;
 
-  return nextModule;
+  const createdRow = Array.isArray(data) ? data[0] : data;
+  if (!createdRow) {
+    throw new Error("Module could not be created for the current user.");
+  }
+
+  return normalizeModule(createdRow);
 }
 
 export async function persistWorkspaceNotifications(notifications) {

@@ -9,7 +9,6 @@ export function Modal({ title, children, footer, onClose }) {
       >
         <div className="modal-header">
           <div>
-            <p className="eyebrow">Modal</p>
             <h3>{title}</h3>
           </div>
           <button

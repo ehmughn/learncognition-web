@@ -132,10 +132,13 @@ export async function updatePassword(newPassword) {
  */
 export async function getUserProfile() {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { profile: null, error: null };
+
     const { data, error } = await supabase
       .from("teacher_workspace_profile")
       .select("*")
-      .eq("id", "teacher")
+      .eq("id", user.id)
       .single();
 
     if (error && error.code !== "PGRST116") throw error;
@@ -147,22 +150,32 @@ export async function getUserProfile() {
 }
 
 /**
- * Initialize workspace data for new user
- * Creates profile and settings if they don't exist
+ * Initialize workspace data for a user
+ * @param {string} userId
  * @param {string} fullName
  * @param {string} email
  * @returns {Promise<{profile, settings, error}>}
  */
-export async function initializeWorkspace(fullName, email) {
+export async function initializeWorkspace(userId, fullName, email) {
   try {
-    // Create or update profile using RPC upsert
+    // 1. Fetch the user's role from the primary profiles table
+    const { data: userData, error: userError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+
+    const userRole = userData?.role || "teacher";
+
+    // 2. Sync this info to the teacher_workspace_profile
+    // We use the userId instead of hardcoded 'teacher' to allow multiple users
     const { data: profileData, error: profileError } = await supabase.rpc(
       "update_workspace_profile",
       {
-        p_id: "teacher",
+        p_id: userId,
         p_full_name: fullName,
         p_email: email,
-        p_role: "teacher",
+        p_role: userRole,
         p_school: null,
         p_status: "Verified",
         p_avatar_url: null,
@@ -171,11 +184,11 @@ export async function initializeWorkspace(fullName, email) {
 
     if (profileError) throw profileError;
 
-    // Create or update settings using RPC upsert
+    // 3. Initialize or update settings
     const { data: settingsData, error: settingsError } = await supabase.rpc(
       "update_workspace_settings",
       {
-        p_id: "workspace",
+        p_id: userId,
         p_notifications_enabled: true,
         p_sharing_enabled: true,
         p_theme_mode: "light",
@@ -185,11 +198,12 @@ export async function initializeWorkspace(fullName, email) {
     if (settingsError) throw settingsError;
 
     return {
-      profile: profileData?.[0],
-      settings: settingsData?.[0],
+      profile: profileData?.[0] || profileData,
+      settings: settingsData?.[0] || settingsData,
       error: null,
     };
   } catch (error) {
+    console.error("Workspace initialization error:", error);
     return { profile: null, settings: null, error };
   }
 }

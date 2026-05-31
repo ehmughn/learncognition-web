@@ -23,6 +23,9 @@ export function resolveRoute(pathname, isAuthenticated) {
   if (path === "/modules") return { kind: "modules" };
   if (path === "/profile") return { kind: "profile" };
   if (path === "/settings") return { kind: "settings" };
+  if (path === "/admin") return { kind: "admin" };
+  if (path === "/admin/accounts") return { kind: "admin-accounts" };
+  if (path === "/admin/items") return { kind: "admin-items" };
 
   const routes = [
     [

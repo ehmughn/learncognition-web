@@ -13,7 +13,7 @@ import {
   saveWorkspaceProfile,
   saveWorkspaceSettings,
 } from "./services/workspace.js";
-import { fetchDashboardSummary } from "./services/integrations.js";
+import { fetchDashboardSummary, supabase } from "./services/integrations.js";
 import {
   onAuthStateChange,
   signOut as authSignOut,
@@ -42,6 +42,7 @@ export default function App() {
     role: "guest",
     name: "",
     email: "",
+    userId: "",
     verified: false,
   });
 
@@ -60,6 +61,7 @@ export default function App() {
   const [workspaceLive, setWorkspaceLive] = useState(false);
   const [workspaceLoading, setWorkspaceLoading] = useState(true);
   const [workspaceHydrated, setWorkspaceHydrated] = useState(false);
+  const [authLoaded, setAuthLoaded] = useState(false);
   const [tour, setTour] = useState({
     active: false,
     step: 0,
@@ -69,23 +71,40 @@ export default function App() {
 
   // Listen to auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChange((user, supabaseSession) => {
+    const unsubscribe = onAuthStateChange(async (user, supabaseSession) => {
       if (user && supabaseSession) {
-        // User is logged in - initialize workspace
+        // 1. Fetch the user's actual role from the profiles table first
+        const { data: userData } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+
+        const actualRole = userData?.role || "teacher";
+        console.log("[Auth] Role detected:", actualRole);
+
+        // 2. Set the session once with the correct role
         setSession({
           authenticated: true,
-          role: "teacher",
-          name: user.user_metadata?.full_name || user.email || "Teacher",
+          role: actualRole,
+          name: user.user_metadata?.full_name || user.email || "User",
           email: user.email || "",
+          userId: user.id || "",
           verified: true,
         });
         setPendingFlow(null);
 
-        // Initialize workspace profile and settings on first login
-        void initializeWorkspace(
-          user.user_metadata?.full_name || "Teacher",
+        // 3. Initialize/Sync workspace data in background
+        const { profile: wsProfile } = await initializeWorkspace(
+          user.id,
+          user.user_metadata?.full_name || "User",
           user.email || "",
-        ).catch(() => {});
+        );
+
+        if (wsProfile) {
+          setProfile(wsProfile);
+        }
+        setAuthLoaded(true);
       } else {
         // User is logged out
         setSession({
@@ -93,9 +112,12 @@ export default function App() {
           role: "guest",
           name: "",
           email: "",
+          userId: "",
           verified: false,
         });
         setPendingFlow(null);
+        setProfile(initialWorkspace.profile);
+        setAuthLoaded(true);
       }
     });
 
@@ -124,6 +146,10 @@ export default function App() {
       setStudents(nextWorkspace.students);
       setNotifications(nextWorkspace.notifications);
       setProfile(nextWorkspace.profile);
+      setSession((current) => ({
+        ...current,
+        role: nextWorkspace.profile?.role || "teacher",
+      }));
       setSettings(nextWorkspace.settings);
       setWorkspaceLive(nextWorkspace.live);
       setWorkspaceSummary(
@@ -176,6 +202,16 @@ export default function App() {
   const showToast = (message) => setToast(message);
   const notificationCounter = useRef(0);
 
+  const filterOwnedModules = useCallback(
+    (moduleList) => {
+      if (!session.userId) return moduleList;
+      return moduleList.filter(
+        (module) => !module.ownerId || module.ownerId === session.userId,
+      );
+    },
+    [session.userId],
+  );
+
   const addNotification = (title, message) => {
     notificationCounter.current += 1;
     const next = {
@@ -201,18 +237,30 @@ export default function App() {
 
   const createModule = async (type) => {
     const nextModule = await createWorkspaceModule(type);
-    setModules((current) => [...current, nextModule]);
+    const ownedModule = {
+      ...nextModule,
+      ownerId: nextModule.ownerId || session.userId || null,
+    };
+    setModules((current) => [...filterOwnedModules(current), ownedModule]);
     void refreshWorkspace().catch(() => {});
-    return nextModule;
+    return ownedModule;
   };
 
   const saveModule = async (module) => {
     const savedModule = await saveWorkspaceModule(module);
+    const ownedModule = {
+      ...savedModule,
+      ownerId: savedModule.ownerId || session.userId || null,
+    };
     setModules((current) =>
-      current.map((item) => (item.id === savedModule.id ? savedModule : item)),
+      filterOwnedModules(
+        current.map((item) =>
+          item.id === ownedModule.id ? ownedModule : item,
+        ),
+      ),
     );
     void refreshWorkspace().catch(() => {});
-    return savedModule;
+    return ownedModule;
   };
 
   const updateSettings = async (nextSettings) => {
@@ -245,7 +293,7 @@ export default function App() {
       loadWorkspaceData(),
       fetchDashboardSummary(),
     ]);
-    setModules(nextWorkspace.modules);
+    setModules(filterOwnedModules(nextWorkspace.modules));
     setStudents(nextWorkspace.students);
     setNotifications(nextWorkspace.notifications);
     setProfile(nextWorkspace.profile);
@@ -284,6 +332,7 @@ export default function App() {
         role: "guest",
         name: "",
         email: "",
+        userId: "",
         verified: false,
       });
       setPendingFlow(null);

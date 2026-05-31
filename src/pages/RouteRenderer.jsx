@@ -1,6 +1,6 @@
 import { useApp } from "../context/AppContext.jsx";
 import { Suspense, lazy } from "react";
-import { LoadingScreen } from "../components/LoadingScreen.jsx";
+import { LoadingScreen } from "../components/ui/LoadingScreen.jsx";
 
 // Migrated pages
 import GuestLandingPage from "./GuestLandingPage.jsx";
@@ -24,6 +24,9 @@ const LazyCreateModulesPage = lazy(() => import("./CreateModulesPage.jsx"));
 const LazyModulesListPage = lazy(() => import("./ModulesListPage.jsx"));
 const LazyProfilePage = lazy(() => import("./ProfilePage.jsx"));
 const LazySettingsPage = lazy(() => import("./SettingsPage.jsx"));
+const LazyAdminDashboardPage = lazy(() => import("./admin/AdminDashboardPage.jsx"));
+const LazyAdminAccountsPage = lazy(() => import("./admin/AdminAccountsPage.jsx"));
+const LazyAdminItemsPage = lazy(() => import("./admin/AdminItemsPage.jsx"));
 const LazyModuleDetailPage = lazy(
   () => import("./modules/ModuleDetailPage.jsx"),
 );
@@ -145,6 +148,30 @@ export function RouteRenderer() {
         <PageLoader>
           <ProtectedRoute>
             <LazySettingsPage />
+          </ProtectedRoute>
+        </PageLoader>
+      );
+    case "admin":
+      return (
+        <PageLoader>
+          <ProtectedRoute>
+            <LazyAdminDashboardPage />
+          </ProtectedRoute>
+        </PageLoader>
+      );
+    case "admin-accounts":
+      return (
+        <PageLoader>
+          <ProtectedRoute>
+            <LazyAdminAccountsPage />
+          </ProtectedRoute>
+        </PageLoader>
+      );
+    case "admin-items":
+      return (
+        <PageLoader>
+          <ProtectedRoute>
+            <LazyAdminItemsPage />
           </ProtectedRoute>
         </PageLoader>
       );

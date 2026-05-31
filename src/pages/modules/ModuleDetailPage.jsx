@@ -2,7 +2,6 @@ import {
   BookOpen,
   Gauge,
   PencilLine,
-  ScanSearch,
   Share2,
   Table2,
   Users,
@@ -15,10 +14,10 @@ import { PrimaryButton, SecondaryButton } from "../../components/ui/Button.jsx";
 export default function ModuleDetailPage({ moduleId }) {
   const { navigate, getModuleView, workspaceSummary } = useApp();
   const module = getModuleView(moduleId);
+  const moduleTypeLabel = module?.type === "identify" ? "Identify" : "Search";
   if (!module) {
     return (
       <PageShell
-        eyebrow={`Module / ${moduleId}`}
         title={workspaceSummary.live ? "Module unavailable" : "Loading module"}
         actions={
           <SecondaryButton onClick={() => navigate("/modules")}>
@@ -43,11 +42,6 @@ export default function ModuleDetailPage({ moduleId }) {
   }
   const progressRows = [
     {
-      label: "Scanned",
-      value: module.stats.scanned,
-      percent: Math.min(module.stats.scanned, 100),
-    },
-    {
       label: "Taken",
       value: module.stats.taken,
       percent: Math.min(module.stats.taken, 100),
@@ -61,8 +55,15 @@ export default function ModuleDetailPage({ moduleId }) {
 
   return (
     <PageShell
-      eyebrow={`Module / ${module.id}`}
       title={module.name}
+      subtitle={
+        <>
+          <span className="module-detail-subtitle">
+            {module.description || "No description provided."}
+          </span>
+          <span className="module-detail-type">{moduleTypeLabel} module</span>
+        </>
+      }
       actions={
         <>
           <PrimaryButton
@@ -85,9 +86,7 @@ export default function ModuleDetailPage({ moduleId }) {
           <div className="panel-header">
             <div>
               <p className="eyebrow">Module dashboard</p>
-              <h3>Live performance overview</h3>
             </div>
-            <StatusPill tone="accent">{module.type}</StatusPill>
           </div>
 
           <div className="module-dashboard-layout">
@@ -122,7 +121,6 @@ export default function ModuleDetailPage({ moduleId }) {
             <div className="panel-header">
               <div>
                 <p className="eyebrow">Summary</p>
-                <h3>Key module metrics</h3>
               </div>
             </div>
             <div className="module-summary-grid">
@@ -130,11 +128,6 @@ export default function ModuleDetailPage({ moduleId }) {
                 <BookOpen size={16} aria-hidden="true" />
                 <strong>{module.stats.items}</strong>
                 <span>Items</span>
-              </div>
-              <div>
-                <ScanSearch size={16} aria-hidden="true" />
-                <strong>{module.stats.scanned}</strong>
-                <span>Scanned</span>
               </div>
               <div>
                 <Users size={16} aria-hidden="true" />
@@ -149,14 +142,8 @@ export default function ModuleDetailPage({ moduleId }) {
             </div>
           </Card>
 
-          <Card className="module-summary-card">
-            <div className="panel-header">
-              <div>
-                <p className="eyebrow">Shortcuts</p>
-                <h3>Fast actions</h3>
-              </div>
-            </div>
-            <div className="stack">
+          <div className="module-shortcuts">
+            <div className="module-shortcuts-buttons">
               <SecondaryButton
                 onClick={() => navigate(`/modules/${module.id}/students`)}
               >
@@ -176,19 +163,14 @@ export default function ModuleDetailPage({ moduleId }) {
                 Open editor
               </SecondaryButton>
             </div>
-          </Card>
+          </div>
         </div>
 
         <Card className="dashboard-table-card">
           <div className="panel-header">
             <div>
               <p className="eyebrow">Module item overview</p>
-              <h3>{module.items.length} configured items</h3>
             </div>
-            <StatusPill tone="neutral">
-              <Table2 size={14} aria-hidden="true" />
-              Table view
-            </StatusPill>
           </div>
 
           <div className="table-wrap">

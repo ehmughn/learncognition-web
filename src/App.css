@@ -18,7 +18,7 @@
   --radius: 14px;
   --radius-lg: 20px;
   --radius-xl: 28px;
-  --font-display: "Instrument Serif", Georgia, serif;
+  --font-display: var(--font-body);
   --font-body: "DM Sans", system-ui, sans-serif;
 }
 

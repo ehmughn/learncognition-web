@@ -10,7 +10,6 @@ export default function ModuleStudentsPage({ moduleId }) {
   if (!module) {
     return (
       <PageShell
-        eyebrow={`Module / ${moduleId} / Students`}
         title={workspaceSummary.live ? "Module unavailable" : "Loading module"}
         actions={
           <SecondaryButton onClick={() => navigate(`/modules/${moduleId}`)}>
@@ -39,7 +38,6 @@ export default function ModuleStudentsPage({ moduleId }) {
 
   return (
     <PageShell
-      eyebrow={`Module / ${moduleId} / Students`}
       title="Students"
       actions={
         <SecondaryButton onClick={() => navigate(`/modules/${moduleId}`)}>

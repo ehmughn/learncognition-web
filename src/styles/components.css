@@ -271,6 +271,7 @@
 .status-pill {
   display: inline-flex;
   align-items: center;
+  gap: 0.35rem;
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.75rem;

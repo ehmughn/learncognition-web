@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&display=swap");
+
 :root {
   --text: #132033;
   --muted: #667085;
@@ -33,7 +35,7 @@ html {
     ),
     linear-gradient(180deg, #f7f5f1 0%, #f3efe9 100%);
   font-family:
-    "Inter",
+    "DM Sans",
     "Segoe UI Variable",
     "Segoe UI",
     ui-sans-serif,
@@ -53,6 +55,15 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  font-family:
+    "DM Sans",
+    "Segoe UI Variable",
+    "Segoe UI",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   color: var(--text);
   background:
     radial-gradient(

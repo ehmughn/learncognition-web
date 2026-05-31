@@ -1,13 +1,23 @@
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  Plus,
+  Trash2,
+  Package,
+  Search,
+} from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import "@google/model-viewer";
 import { useApp } from "../../context/AppContext.jsx";
 import { PageShell } from "../../components/layout/PageShell.jsx";
-import { Card, Field, StatusPill } from "../../components/ui/Card.jsx";
-import { Select, TextArea } from "../../components/ui/FormInputs.jsx";
+import { Card, Field } from "../../components/ui/Card.jsx";
+import { Input, Select, TextArea } from "../../components/ui/FormInputs.jsx";
 import { PrimaryButton, SecondaryButton } from "../../components/ui/Button.jsx";
 import { Modal } from "../../components/ui/Modal.jsx";
 import { getIdentifyModelAsset } from "../../constants/modelAssets.js";
+import { supabase } from "../../services/integrations.js";
 
 function IdentifyModelPreview({ label }) {
   const asset = getIdentifyModelAsset(label);
@@ -37,13 +47,8 @@ function IdentifyModelPreview({ label }) {
         <model-viewer ref={viewerRef} className="model-viewer" />
       </div>
       <div className="model-preview-meta">
-        <div>
-          <p className="eyebrow">Rendered preview</p>
-          <strong>{label}</strong>
-        </div>
-        <span>{asset.title}</span>
+        <strong>Preview</strong>
       </div>
-      <p className="model-preview-note">{asset.note}</p>
     </div>
   );
 }
@@ -52,13 +57,80 @@ export default function ModuleEditPage({ moduleId }) {
   const { navigate, getModuleView, saveModule, showToast, workspaceSummary } =
     useApp();
   const baseModule = getModuleView(moduleId);
+  const [moduleName, setModuleName] = useState(baseModule?.name ?? "");
+  const [moduleDescription, setModuleDescription] = useState(
+    baseModule?.description ?? "",
+  );
   const [moduleType, setModuleType] = useState(baseModule?.type ?? "identify");
   const [items, setItems] = useState(
     () => baseModule?.items.map((item) => ({ ...item })) ?? [],
   );
+  const [itemPreviewDescriptions, setItemPreviewDescriptions] = useState(() =>
+    Object.fromEntries(
+      (baseModule?.items ?? []).map((item) => [
+        item.id,
+        item.description ?? "",
+      ]),
+    ),
+  );
+  const [expandedItems, setExpandedItems] = useState(() =>
+    Object.fromEntries(
+      (baseModule?.items ?? []).map((item) => [item.id, true]),
+    ),
+  );
+  const itemCardRefs = useRef(new Map());
+  const previousItemRects = useRef(new Map());
+  const previousItemOrder = useRef(items.map((item) => item.id));
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [dragIndex, setDragIndex] = useState(null);
+  const [pendingAction, setPendingAction] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLibraryModalOpen, setIsLibraryModalOpen] = useState(false);
+  const [libraryItems, setLibraryItems] = useState([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [librarySearch, setLibrarySearch] = useState("");
+
+  const fetchLibraryItems = async () => {
+    setLibraryLoading(true);
+    const { data, error } = await supabase
+      .from("shared_activity_objects")
+      .select("*")
+      .order("display_name", { ascending: true });
+
+    if (error) {
+      showToast("Error fetching library items.");
+    } else {
+      setLibraryItems(data || []);
+    }
+    setLibraryLoading(false);
+  };
+
+  useEffect(() => {
+    if (isLibraryModalOpen) {
+      fetchLibraryItems();
+    }
+  }, [isLibraryModalOpen]);
+
+  const importItem = (libItem) => {
+    const nextItem = {
+      id: `item-${Date.now()}`,
+      label: libItem.label,
+      description: libItem.display_name,
+    };
+
+    setItems((current) => [...current, nextItem]);
+    setItemPreviewDescriptions((current) => ({
+      ...current,
+      [nextItem.id]: nextItem.description,
+    }));
+    setExpandedItems((current) => ({ ...current, [nextItem.id]: true }));
+    setIsLibraryModalOpen(false);
+    showToast(`Imported ${libItem.display_name}.`);
+  };
+
+  const filteredLibrary = libraryItems.filter((item) =>
+    item.display_name.toLowerCase().includes(librarySearch.toLowerCase()) ||
+    item.label.toLowerCase().includes(librarySearch.toLowerCase())
+  );
 
   if (!baseModule) {
     return (
@@ -96,21 +168,106 @@ export default function ModuleEditPage({ moduleId }) {
     );
   };
 
-  const addItem = () => {
-    setItems((current) => [
+  const commitItemPreviewDescription = (itemId, description) => {
+    setItemPreviewDescriptions((current) => ({
       ...current,
-      {
-        id: `item-${Date.now()}`,
-        label: moduleType === "identify" ? "Bottle" : "Notebook",
-        description: "",
-      },
-    ]);
+      [itemId]: description,
+    }));
+  };
+
+  useLayoutEffect(() => {
+    const currentRects = new Map();
+    const currentOrder = items.map((item) => item.id);
+    const orderChanged =
+      currentOrder.length !== previousItemOrder.current.length ||
+      currentOrder.some(
+        (itemId, index) => itemId !== previousItemOrder.current[index],
+      );
+
+    items.forEach((item) => {
+      const node = itemCardRefs.current.get(item.id);
+      if (!node) return;
+      currentRects.set(item.id, node.getBoundingClientRect());
+    });
+
+    if (!orderChanged) {
+      previousItemRects.current = currentRects;
+      previousItemOrder.current = currentOrder;
+      return;
+    }
+
+    items.forEach((item) => {
+      const node = itemCardRefs.current.get(item.id);
+      const previousRect = previousItemRects.current.get(item.id);
+      const currentRect = currentRects.get(item.id);
+
+      if (!node || !previousRect || !currentRect) return;
+
+      const deltaX = previousRect.left - currentRect.left;
+      const deltaY = previousRect.top - currentRect.top;
+
+      if (!deltaX && !deltaY) return;
+
+      node.animate(
+        [
+          {
+            transform: `translate(${deltaX}px, ${deltaY}px)`,
+          },
+          {
+            transform: "translate(0, 0)",
+          },
+        ],
+        {
+          duration: 240,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        },
+      );
+    });
+
+    previousItemRects.current = currentRects;
+    previousItemOrder.current = currentOrder;
+  }, [items]);
+
+  const toggleItemExpanded = (itemId) => {
+    setExpandedItems((current) => ({
+      ...current,
+      [itemId]: !current[itemId],
+    }));
+  };
+
+  const addItem = () => {
+    const nextItem = {
+      id: `item-${Date.now()}`,
+      label: moduleType === "identify" ? "Bottle" : "Notebook",
+      description: "",
+    };
+
+    setItems((current) => [...current, nextItem]);
+    setItemPreviewDescriptions((current) => ({
+      ...current,
+      [nextItem.id]: "",
+    }));
+    setExpandedItems((current) => ({ ...current, [nextItem.id]: true }));
     showToast(`Item ${items.length + 1} added.`);
   };
 
   const removeItem = () => {
     if (deleteTarget == null) return;
+
+    const removedItem = items[deleteTarget];
     setItems((current) => current.filter((_, index) => index !== deleteTarget));
+    if (removedItem) {
+      setItemPreviewDescriptions((current) => {
+        const next = { ...current };
+        delete next[removedItem.id];
+        return next;
+      });
+      setExpandedItems((current) => {
+        const next = { ...current };
+        delete next[removedItem.id];
+        return next;
+      });
+    }
     setDeleteTarget(null);
     showToast("Item removed.");
   };
@@ -125,11 +282,29 @@ export default function ModuleEditPage({ moduleId }) {
     });
   };
 
+  const allItemsCollapsed =
+    items.length > 0 && items.every((item) => expandedItems[item.id] === false);
+
+  const toggleAllItems = () => {
+    const nextExpanded = allItemsCollapsed;
+    setExpandedItems((current) => {
+      const next = { ...current };
+
+      items.forEach((item) => {
+        next[item.id] = nextExpanded;
+      });
+
+      return next;
+    });
+  };
+
   const saveChanges = async () => {
     setIsSaving(true);
     try {
       await saveModule({
         ...baseModule,
+        name: moduleName.trim() || baseModule.name,
+        description: moduleDescription.trim(),
         type: moduleType,
         items,
       });
@@ -149,12 +324,26 @@ export default function ModuleEditPage({ moduleId }) {
     showToast("Edits discarded.");
   };
 
+  const confirmSaveChanges = async () => {
+    setPendingAction(null);
+    await saveChanges();
+  };
+
+  const confirmCancelChanges = () => {
+    setPendingAction(null);
+    cancelChanges();
+  };
+
   return (
     <PageShell
-      eyebrow={`Module / ${moduleId} / Edit`}
-      title="Edit module content"
+      title="EDIT MODULE"
+      subtitle={moduleDescription.trim() || baseModule.description || ""}
       actions={
         <>
+          <SecondaryButton onClick={() => setIsLibraryModalOpen(true)}>
+            <Package size={16} aria-hidden="true" />
+            Import from Library
+          </SecondaryButton>
           <PrimaryButton onClick={addItem}>
             <Plus size={16} aria-hidden="true" />
             Add item
@@ -166,18 +355,39 @@ export default function ModuleEditPage({ moduleId }) {
         </>
       }
     >
-      <div className="editor-topbar">
-        <Field label="Module type">
-          <Select
-            value={moduleType}
-            onChange={(event) => setModuleType(event.target.value)}
+      <Card className="editor-header-card">
+        <h3 className="editor-header-title">Module Label</h3>
+        <div className="editor-header-fields">
+          <Field label="Module name">
+            <Input
+              value={moduleName}
+              onChange={(event) => setModuleName(event.target.value)}
+              placeholder="Enter module name"
+            />
+          </Field>
+          <Field label="Module description">
+            <TextArea
+              rows="4"
+              value={moduleDescription}
+              onChange={(event) => setModuleDescription(event.target.value)}
+              placeholder="Write a short description for this module"
+            />
+          </Field>
+        </div>
+      </Card>
+
+      <div className="editor-section-header">
+        <h3>All Items</h3>
+        {items.length > 0 ? (
+          <SecondaryButton
+            className="editor-section-button"
+            onClick={toggleAllItems}
           >
-            <option value="identify">Identify</option>
-            <option value="search">Search</option>
-          </Select>
-        </Field>
-        <StatusPill tone="accent">Drag cards to reorder</StatusPill>
+            {allItemsCollapsed ? "Expand all" : "Collapse all"}
+          </SecondaryButton>
+        ) : null}
       </div>
+
       <div className="stack editor-stack">
         {items.length === 0 ? (
           <Card className="empty-state">
@@ -188,75 +398,178 @@ export default function ModuleEditPage({ moduleId }) {
         {items.map((item, index) => (
           <Card
             key={item.id}
-            className="editor-card"
-            draggable
-            onDragStart={() => setDragIndex(index)}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={() => {
-              if (dragIndex != null) {
-                moveItem(dragIndex, index);
-                setDragIndex(null);
+            ref={(node) => {
+              if (node) {
+                itemCardRefs.current.set(item.id, node);
+              } else {
+                itemCardRefs.current.delete(item.id);
               }
             }}
+            className={`editor-card ${expandedItems[item.id] === false ? "is-collapsed" : ""}`.trim()}
           >
-            <div className="editor-card-top">
-              <div className="item-index">{index + 1}</div>
-              <button
-                type="button"
-                className="icon-button danger"
-                onClick={() => setDeleteTarget(index)}
-                aria-label="Remove item"
-              >
-                <Trash2 size={16} aria-hidden="true" />
-              </button>
-            </div>
-            <div className="editor-grid">
-              <Field label="Item name">
-                <Select
-                  value={item.label}
-                  onChange={(event) =>
-                    updateItem(index, "label", event.target.value)
-                  }
+            <div
+              className="editor-card-top"
+              role="button"
+              tabIndex={0}
+              aria-expanded={expandedItems[item.id] !== false}
+              aria-label={`${expandedItems[item.id] === false ? "Expand" : "Collapse"} item ${index + 1}`}
+              title={
+                expandedItems[item.id] === false
+                  ? "Expand item"
+                  : "Collapse item"
+              }
+              onClick={(event) => {
+                if (event.target.closest("button")) return;
+                toggleItemExpanded(item.id);
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                toggleItemExpanded(item.id);
+              }}
+            >
+              <div className="editor-card-meta">
+                <ChevronDown
+                  className={`editor-card-state-icon ${expandedItems[item.id] === false ? "collapsed" : ""}`.trim()}
+                  size={16}
+                  aria-hidden="true"
+                />
+                <div className="item-index">{index + 1}</div>
+                <div className="editor-card-title-copy">
+                  <strong>{item.label}</strong>
+                  <span>
+                    {itemPreviewDescriptions[item.id]?.trim() ||
+                      "No description yet"}
+                  </span>
+                </div>
+              </div>
+              <div className="editor-card-actions">
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={() => moveItem(index, index - 1)}
+                  disabled={index === 0}
+                  aria-label={`Move item ${index + 1} up`}
+                  title="Move up"
                 >
-                  {(moduleType === "identify"
-                    ? ["Bottle", "Chair", "Notebook", "Lamp", "Apple"]
-                    : ["Eraser", "Marker", "Ruler", "Scissors", "Folder"]
-                  ).map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              {moduleType === "identify" ? (
-                <IdentifyModelPreview label={item.label} />
-              ) : null}
-              <div className="editor-field-wide">
-                <Field label="Description">
-                  <TextArea
-                    rows="3"
-                    value={item.description}
-                    onChange={(event) =>
-                      updateItem(index, "description", event.target.value)
-                    }
-                    placeholder="Write the item description"
-                  />
-                </Field>
+                  <ArrowUp size={16} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={() => moveItem(index, index + 1)}
+                  disabled={index === items.length - 1}
+                  aria-label={`Move item ${index + 1} down`}
+                  title="Move down"
+                >
+                  <ArrowDown size={16} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="icon-button danger"
+                  onClick={() => setDeleteTarget(index)}
+                  aria-label="Remove item"
+                >
+                  <Trash2 size={16} aria-hidden="true" />
+                </button>
               </div>
             </div>
-            <div className="drag-hints">
-              <span>Drag card to reorder</span>
-              <span>Drop above or below another item</span>
-            </div>
+            {expandedItems[item.id] !== false ? (
+              <div className="editor-card-body">
+                <div className="editor-grid">
+                  <div className="editor-item-fields">
+                    <Field label="Item name">
+                      <Select
+                        value={item.label}
+                        onChange={(event) =>
+                          updateItem(index, "label", event.target.value)
+                        }
+                      >
+                        {(moduleType === "identify"
+                          ? ["Bottle", "Chair", "Notebook", "Lamp", "Apple"]
+                          : ["Eraser", "Marker", "Ruler", "Scissors", "Folder"]
+                        ).map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                    <Field label="Description">
+                      <TextArea
+                        rows="3"
+                        value={item.description}
+                        onChange={(event) =>
+                          updateItem(index, "description", event.target.value)
+                        }
+                        onBlur={(event) =>
+                          commitItemPreviewDescription(
+                            item.id,
+                            event.target.value,
+                          )
+                        }
+                        placeholder="Write the item description"
+                      />
+                    </Field>
+                  </div>
+                  {moduleType === "identify" ? (
+                    <IdentifyModelPreview label={item.label} />
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </Card>
         ))}
       </div>
       <div className="editor-actions">
-        <SecondaryButton onClick={cancelChanges}>Cancel</SecondaryButton>
-        <PrimaryButton onClick={saveChanges} disabled={isSaving}>
+        <SecondaryButton onClick={() => setPendingAction("cancel")}>
+          Cancel
+        </SecondaryButton>
+        <PrimaryButton
+          onClick={() => setPendingAction("save")}
+          disabled={isSaving}
+        >
           {isSaving ? "Saving..." : "Save changes"}
         </PrimaryButton>
       </div>
+      {pendingAction === "save" ? (
+        <Modal
+          title="Save changes?"
+          onClose={() => setPendingAction(null)}
+          footer={
+            <>
+              <SecondaryButton onClick={() => setPendingAction(null)}>
+                Keep editing
+              </SecondaryButton>
+              <PrimaryButton onClick={confirmSaveChanges} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save changes"}
+              </PrimaryButton>
+            </>
+          }
+        >
+          <p>This will save the module title, description, and item changes.</p>
+        </Modal>
+      ) : null}
+      {pendingAction === "cancel" ? (
+        <Modal
+          title="Discard edits?"
+          onClose={() => setPendingAction(null)}
+          footer={
+            <>
+              <SecondaryButton onClick={() => setPendingAction(null)}>
+                Keep editing
+              </SecondaryButton>
+              <PrimaryButton onClick={confirmCancelChanges}>
+                Discard changes
+              </PrimaryButton>
+            </>
+          }
+        >
+          <p>
+            This will leave the page and discard any unsaved module changes.
+          </p>
+        </Modal>
+      ) : null}
       {deleteTarget != null ? (
         <Modal
           title="Remove item?"
@@ -273,6 +586,41 @@ export default function ModuleEditPage({ moduleId }) {
           <p>This action removes the item from the current module.</p>
         </Modal>
       ) : null}
+      {isLibraryModalOpen && (
+        <Modal
+          title="Import from Library"
+          onClose={() => setIsLibraryModalOpen(false)}
+          wide
+        >
+          <div className="library-search" style={{ marginBottom: "1rem" }}>
+            <Field label="Search Library">
+              <div className="input-with-icon">
+                <Search size={16} />
+                <Input 
+                  value={librarySearch} 
+                  onChange={(e) => setLibrarySearch(e.target.value)} 
+                  placeholder="Search by name or label..."
+                />
+              </div>
+            </Field>
+          </div>
+          <div className="library-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem", maxHeight: "400px", overflowY: "auto" }}>
+            {libraryLoading ? (
+              <p>Loading library...</p>
+            ) : filteredLibrary.length === 0 ? (
+              <p>No matching items found.</p>
+            ) : (
+              filteredLibrary.map((item) => (
+                <div key={item.id} className="library-item-card" style={{ padding: "1rem", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", cursor: "pointer" }} onClick={() => importItem(item)}>
+                  <strong>{item.display_name}</strong>
+                  <p className="subtitle" style={{ fontSize: "0.75rem" }}>Label: {item.label}</p>
+                  <p className="subtitle" style={{ fontSize: "0.75rem" }}>Category: {item.category || "Uncategorized"}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </Modal>
+      )}
     </PageShell>
   );
 }

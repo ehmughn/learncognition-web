@@ -25,7 +25,6 @@ export default function ModuleSharePage({ moduleId }) {
   if (!module) {
     return (
       <PageShell
-        eyebrow={`Module / ${moduleId} / Share`}
         title={workspaceSummary.live ? "Module unavailable" : "Loading module"}
         actions={
           <SecondaryButton onClick={() => navigate("/modules")}>
@@ -79,7 +78,6 @@ export default function ModuleSharePage({ moduleId }) {
 
   return (
     <PageShell
-      eyebrow={`Module / ${module.id} / Share`}
       title="Share this module"
       actions={
         <>
@@ -112,12 +110,6 @@ export default function ModuleSharePage({ moduleId }) {
                 <Share2 size={16} aria-hidden="true" />
                 Direct share
               </PrimaryButton>
-              <SecondaryButton
-                onClick={() => navigate(`/modules/${module.id}`)}
-              >
-                <ArrowLeft size={16} aria-hidden="true" />
-                Back to module
-              </SecondaryButton>
             </div>
           </div>
 
@@ -134,50 +126,8 @@ export default function ModuleSharePage({ moduleId }) {
               <strong>3</strong>
               <span>Track who joined</span>
             </div>
-            <div className="share-step highlight">
-              <strong>{module.students.length}</strong>
-              <span>active learners</span>
-            </div>
           </div>
         </Card>
-
-        <div className="content-grid two-column">
-          <Card>
-            <p className="eyebrow">Sharing status</p>
-            <div className="stack">
-              <div className="summary-row">
-                <strong>Notifications</strong>
-                <span>{notifications.length}</span>
-              </div>
-              <div className="summary-row">
-                <strong>Direct sharing</strong>
-                <span>Available</span>
-              </div>
-              <div className="summary-row">
-                <strong>Targeted send</strong>
-                <span>Enabled</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <p className="eyebrow">Recipient overview</p>
-            <div className="stack">
-              <div className="summary-row">
-                <strong>Students in module</strong>
-                <span>{module.students.length}</span>
-              </div>
-              <div className="summary-row">
-                <strong>Searchable recipients</strong>
-                <span>{students.length}</span>
-              </div>
-              <div className="summary-row">
-                <strong>Quick share mode</strong>
-                <span>List + direct send</span>
-              </div>
-            </div>
-          </Card>
-        </div>
       </div>
       {isModalOpen ? (
         <Modal
