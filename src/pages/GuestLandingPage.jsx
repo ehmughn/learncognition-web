@@ -211,7 +211,7 @@ export default function GuestLandingPage() {
               Log in
             </AppLink>
             <AppLink
-              to="/register"
+              to="/login"
               className="button button-primary landing-nav-cta"
             >
               Get started
@@ -237,7 +237,7 @@ export default function GuestLandingPage() {
               </p>
 
               <div className="hero-actions landing-hero-actions">
-                <AppLink to="/register" className="button button-primary">
+                <AppLink to="/login" className="button button-primary">
                   Get started free
                   <ArrowRight size={16} aria-hidden="true" />
                 </AppLink>
@@ -436,7 +436,7 @@ export default function GuestLandingPage() {
             </div>
 
             <div className="hero-actions landing-cta-actions">
-              <AppLink to="/register" className="button button-primary">
+              <AppLink to="/login" className="button button-primary">
                 Get started free
                 <ArrowRight size={16} aria-hidden="true" />
               </AppLink>

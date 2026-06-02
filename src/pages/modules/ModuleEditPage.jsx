@@ -19,16 +19,16 @@ import { Modal } from "../../components/ui/Modal.jsx";
 import { getIdentifyModelAsset } from "../../constants/modelAssets.js";
 import { supabase } from "../../services/integrations.js";
 
-function IdentifyModelPreview({ label }) {
-  const asset = getIdentifyModelAsset(label);
+function IdentifyModelPreview({ label, modelUrl }) {
+  const asset = getIdentifyModelAsset(label) || {};
   const viewerRef = useRef(null);
 
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer) return;
 
-    viewer.src = asset.src;
-    viewer.alt = `${label} preview rendered with ${asset.title}`;
+    viewer.src = modelUrl || asset.src || "";
+    viewer.alt = `${label} preview rendered`;
     viewer.cameraControls = true;
     viewer.autoRotate = true;
     viewer.interactionPrompt = "none";
@@ -38,8 +38,8 @@ function IdentifyModelPreview({ label }) {
     viewer.cameraOrbit = "45deg 70deg 2.8m";
     viewer.minCameraOrbit = "auto auto 1.6m";
     viewer.maxCameraOrbit = "auto auto 5m";
-    viewer.disableZoom = true;
-  }, [asset.src, asset.title, label]);
+    viewer.disableZoom = false;
+  }, [asset.src, label, modelUrl]);
 
   return (
     <div className="model-preview">
@@ -105,16 +105,15 @@ export default function ModuleEditPage({ moduleId }) {
   };
 
   useEffect(() => {
-    if (isLibraryModalOpen) {
-      fetchLibraryItems();
-    }
-  }, [isLibraryModalOpen]);
+    fetchLibraryItems();
+  }, []);
 
   const importItem = (libItem) => {
     const nextItem = {
       id: `item-${Date.now()}`,
       label: libItem.label,
       description: libItem.display_name,
+      model_url: libItem.model_url,
     };
 
     setItems((current) => [...current, nextItem]);
@@ -127,9 +126,10 @@ export default function ModuleEditPage({ moduleId }) {
     showToast(`Imported ${libItem.display_name}.`);
   };
 
-  const filteredLibrary = libraryItems.filter((item) =>
-    item.display_name.toLowerCase().includes(librarySearch.toLowerCase()) ||
-    item.label.toLowerCase().includes(librarySearch.toLowerCase())
+  const filteredLibrary = libraryItems.filter(
+    (item) =>
+      item.display_name.toLowerCase().includes(librarySearch.toLowerCase()) ||
+      item.label.toLowerCase().includes(librarySearch.toLowerCase()),
   );
 
   if (!baseModule) {
@@ -236,10 +236,14 @@ export default function ModuleEditPage({ moduleId }) {
   };
 
   const addItem = () => {
+    const defaultLibItem =
+      libraryItems.length > 0 ? libraryItems[0] : { label: "", model_url: "" };
+
     const nextItem = {
       id: `item-${Date.now()}`,
-      label: moduleType === "identify" ? "Bottle" : "Notebook",
+      label: defaultLibItem.label,
       description: "",
+      model_url: defaultLibItem.model_url,
     };
 
     setItems((current) => [...current, nextItem]);
@@ -340,14 +344,6 @@ export default function ModuleEditPage({ moduleId }) {
       subtitle={moduleDescription.trim() || baseModule.description || ""}
       actions={
         <>
-          <SecondaryButton onClick={() => setIsLibraryModalOpen(true)}>
-            <Package size={16} aria-hidden="true" />
-            Import from Library
-          </SecondaryButton>
-          <PrimaryButton onClick={addItem}>
-            <Plus size={16} aria-hidden="true" />
-            Add item
-          </PrimaryButton>
           <SecondaryButton onClick={() => navigate(`/modules/${moduleId}`)}>
             <ArrowLeft size={16} aria-hidden="true" />
             Back to module
@@ -378,14 +374,23 @@ export default function ModuleEditPage({ moduleId }) {
 
       <div className="editor-section-header">
         <h3>All Items</h3>
-        {items.length > 0 ? (
-          <SecondaryButton
-            className="editor-section-button"
-            onClick={toggleAllItems}
-          >
-            {allItemsCollapsed ? "Expand all" : "Collapse all"}
-          </SecondaryButton>
-        ) : null}
+        <div
+          className="editor-section-actions"
+          style={{ display: "flex", gap: "0.5rem" }}
+        >
+          <PrimaryButton onClick={addItem}>
+            <Plus size={16} aria-hidden="true" />
+            Add item
+          </PrimaryButton>
+          {items.length > 0 ? (
+            <SecondaryButton
+              className="editor-section-button"
+              onClick={toggleAllItems}
+            >
+              {allItemsCollapsed ? "Expand all" : "Collapse all"}
+            </SecondaryButton>
+          ) : null}
+        </div>
       </div>
 
       <div className="stack editor-stack">
@@ -481,18 +486,36 @@ export default function ModuleEditPage({ moduleId }) {
                     <Field label="Item name">
                       <Select
                         value={item.label}
-                        onChange={(event) =>
-                          updateItem(index, "label", event.target.value)
-                        }
+                        onChange={(event) => {
+                          const selectedLabel = event.target.value;
+                          const libItem = libraryItems.find(
+                            (l) => l.label === selectedLabel,
+                          );
+                          setItems((current) =>
+                            current.map((it, itemIndex) =>
+                              itemIndex === index
+                                ? {
+                                    ...it,
+                                    label: selectedLabel,
+                                    model_url:
+                                      libItem?.model_url || it.model_url,
+                                  }
+                                : it,
+                            ),
+                          );
+                        }}
                       >
-                        {(moduleType === "identify"
-                          ? ["Bottle", "Chair", "Notebook", "Lamp", "Apple"]
-                          : ["Eraser", "Marker", "Ruler", "Scissors", "Folder"]
-                        ).map((option) => (
-                          <option key={option} value={option}>
-                            {option}
+                        {libraryItems.length > 0 ? (
+                          libraryItems.map((libItem) => (
+                            <option key={libItem.id} value={libItem.label}>
+                              {libItem.display_name}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>
+                            No items available in library
                           </option>
-                        ))}
+                        )}
                       </Select>
                     </Field>
                     <Field label="Description">
@@ -513,7 +536,14 @@ export default function ModuleEditPage({ moduleId }) {
                     </Field>
                   </div>
                   {moduleType === "identify" ? (
-                    <IdentifyModelPreview label={item.label} />
+                    <IdentifyModelPreview
+                      label={item.label}
+                      modelUrl={
+                        item.model_url ||
+                        libraryItems.find((l) => l.label === item.label)
+                          ?.model_url
+                      }
+                    />
                   ) : null}
                 </div>
               </div>
@@ -596,25 +626,48 @@ export default function ModuleEditPage({ moduleId }) {
             <Field label="Search Library">
               <div className="input-with-icon">
                 <Search size={16} />
-                <Input 
-                  value={librarySearch} 
-                  onChange={(e) => setLibrarySearch(e.target.value)} 
+                <Input
+                  value={librarySearch}
+                  onChange={(e) => setLibrarySearch(e.target.value)}
                   placeholder="Search by name or label..."
                 />
               </div>
             </Field>
           </div>
-          <div className="library-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem", maxHeight: "400px", overflowY: "auto" }}>
+          <div
+            className="library-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+              gap: "1rem",
+              maxHeight: "400px",
+              overflowY: "auto",
+            }}
+          >
             {libraryLoading ? (
               <p>Loading library...</p>
             ) : filteredLibrary.length === 0 ? (
               <p>No matching items found.</p>
             ) : (
               filteredLibrary.map((item) => (
-                <div key={item.id} className="library-item-card" style={{ padding: "1rem", border: "1px solid var(--border-subtle)", borderRadius: "var(--radius-md)", cursor: "pointer" }} onClick={() => importItem(item)}>
+                <div
+                  key={item.id}
+                  className="library-item-card"
+                  style={{
+                    padding: "1rem",
+                    border: "1px solid var(--border-subtle)",
+                    borderRadius: "var(--radius-md)",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => importItem(item)}
+                >
                   <strong>{item.display_name}</strong>
-                  <p className="subtitle" style={{ fontSize: "0.75rem" }}>Label: {item.label}</p>
-                  <p className="subtitle" style={{ fontSize: "0.75rem" }}>Category: {item.category || "Uncategorized"}</p>
+                  <p className="subtitle" style={{ fontSize: "0.75rem" }}>
+                    Label: {item.label}
+                  </p>
+                  <p className="subtitle" style={{ fontSize: "0.75rem" }}>
+                    Category: {item.category || "Uncategorized"}
+                  </p>
                 </div>
               ))
             )}

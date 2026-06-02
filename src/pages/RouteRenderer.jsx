@@ -19,14 +19,34 @@ const LazyResetPasswordPage = lazy(
 );
 const LazyTeacherHomePage = lazy(() => import("./TeacherHomePage.jsx"));
 const LazyDashboardPage = lazy(() => import("./DashboardPage.jsx"));
+const LazyMessagesPage = lazy(() => import("./MessagesPage.jsx"));
 const LazyNotificationsPage = lazy(() => import("./NotificationsPage.jsx"));
 const LazyCreateModulesPage = lazy(() => import("./CreateModulesPage.jsx"));
 const LazyModulesListPage = lazy(() => import("./ModulesListPage.jsx"));
 const LazyProfilePage = lazy(() => import("./ProfilePage.jsx"));
 const LazySettingsPage = lazy(() => import("./SettingsPage.jsx"));
-const LazyAdminDashboardPage = lazy(() => import("./admin/AdminDashboardPage.jsx"));
-const LazyAdminAccountsPage = lazy(() => import("./admin/AdminAccountsPage.jsx"));
+const LazyAdminDashboardPage = lazy(
+  () => import("./admin/AdminDashboardPage.jsx"),
+);
+const LazyAdminAccountsPage = lazy(
+  () => import("./admin/AdminAccountsPage.jsx"),
+);
+const LazyAdminTeachersPage = lazy(
+  () => import("./admin/AdminTeachersPage.jsx"),
+);
+const LazyAdminParentsPage = lazy(
+  () => import("./admin/AdminParentsPage.jsx"),
+);
+const LazyAdminStudentsPage = lazy(
+  () => import("./admin/AdminStudentsPage.jsx"),
+);
+const LazyAdminAnalyticsPage = lazy(
+  () => import("./admin/AdminAnalyticsPage.jsx"),
+);
 const LazyAdminItemsPage = lazy(() => import("./admin/AdminItemsPage.jsx"));
+const LazyAdminSettingsPage = lazy(
+  () => import("./admin/AdminSettingsPage.jsx"),
+);
 const LazyModuleDetailPage = lazy(
   () => import("./modules/ModuleDetailPage.jsx"),
 );
@@ -57,8 +77,42 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+function AdminProtectedRoute({ children }) {
+  const { session, workspaceLoading, navigate } = useApp();
+
+  if (!session.authenticated) {
+    navigate("/login", { replace: true });
+    return <LoadingScreen />;
+  }
+
+  if (workspaceLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (session.role !== "admin") {
+    const { AdminLayout } = lazy(() => import("../components/layout/AdminLayout.jsx"));
+    return (
+      <Suspense fallback={<LoadingScreen />}>
+        <div style={{ padding: '2rem' }}>
+          <h2>Access Denied</h2>
+          <p>You do not have permission to view this page.</p>
+          <button onClick={() => navigate("/")} className="button button-primary" style={{ marginTop: '1rem' }}>
+            Go to Home
+          </button>
+        </div>
+      </Suspense>
+    );
+  }
+
+  return children;
+}
+
 export function RouteRenderer() {
-  const { route, workspaceLive, workspaceLoading } = useApp();
+  const { route, workspaceLive, workspaceLoading, authLoaded } = useApp();
+
+  if (!authLoaded) {
+    return <LoadingScreen />;
+  }
 
   switch (route.kind) {
     case "guest-landing":
@@ -111,6 +165,14 @@ export function RouteRenderer() {
           </ProtectedRoute>
         </PageLoader>
       );
+    case "messages":
+      return (
+        <PageLoader>
+          <ProtectedRoute>
+            <LazyMessagesPage />
+          </ProtectedRoute>
+        </PageLoader>
+      );
     case "notifications":
       return (
         <PageLoader>
@@ -154,25 +216,65 @@ export function RouteRenderer() {
     case "admin":
       return (
         <PageLoader>
-          <ProtectedRoute>
+          <AdminProtectedRoute>
             <LazyAdminDashboardPage />
-          </ProtectedRoute>
+          </AdminProtectedRoute>
         </PageLoader>
       );
     case "admin-accounts":
       return (
         <PageLoader>
-          <ProtectedRoute>
+          <AdminProtectedRoute>
             <LazyAdminAccountsPage />
-          </ProtectedRoute>
+          </AdminProtectedRoute>
+        </PageLoader>
+      );
+    case "admin-teachers":
+      return (
+        <PageLoader>
+          <AdminProtectedRoute>
+            <LazyAdminTeachersPage />
+          </AdminProtectedRoute>
+        </PageLoader>
+      );
+    case "admin-parents":
+      return (
+        <PageLoader>
+          <AdminProtectedRoute>
+            <LazyAdminParentsPage />
+          </AdminProtectedRoute>
+        </PageLoader>
+      );
+    case "admin-students":
+      return (
+        <PageLoader>
+          <AdminProtectedRoute>
+            <LazyAdminStudentsPage />
+          </AdminProtectedRoute>
+        </PageLoader>
+      );
+    case "admin-analytics":
+      return (
+        <PageLoader>
+          <AdminProtectedRoute>
+            <LazyAdminAnalyticsPage />
+          </AdminProtectedRoute>
         </PageLoader>
       );
     case "admin-items":
       return (
         <PageLoader>
-          <ProtectedRoute>
+          <AdminProtectedRoute>
             <LazyAdminItemsPage />
-          </ProtectedRoute>
+          </AdminProtectedRoute>
+        </PageLoader>
+      );
+    case "admin-settings":
+      return (
+        <PageLoader>
+          <AdminProtectedRoute>
+            <LazyAdminSettingsPage />
+          </AdminProtectedRoute>
         </PageLoader>
       );
     case "module":

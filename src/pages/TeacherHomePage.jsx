@@ -22,22 +22,10 @@ const quickActions = [
     to: "/dashboard",
   },
   {
-    icon: Bell,
-    title: "Notifications",
-    copy: "Track shares, scores, and account updates in one place.",
-    to: "/notifications",
-  },
-  {
     icon: BookOpen,
     title: "Modules list",
     copy: "Open module records, descriptions, and share codes.",
     to: "/modules",
-  },
-  {
-    icon: Sparkles,
-    title: "Settings",
-    copy: "Tune your workspace, appearance, and session preferences.",
-    to: "/settings",
   },
 ];
 
@@ -112,7 +100,7 @@ export default function TeacherHomePage() {
           <MetricStrip items={homeMetrics} />
         </div>
 
-        <Card className="home-actions-card home-wide-card">
+        <Card className="home-actions-card">
           <div className="home-section-heading">
             <p className="eyebrow">Quick actions</p>
             <h3>Jump back to the tools you use most.</h3>
@@ -146,38 +134,6 @@ export default function TeacherHomePage() {
               );
             })}
           </div>
-        </Card>
-
-        <Card>
-          <p className="eyebrow">Recent activity</p>
-          {notifications.length ? (
-            <div className="stack">
-              {notifications.slice(0, 4).map((item) => (
-                <div className="activity-row" key={item.id}>
-                  <div>
-                    <strong>{item.title}</strong>
-                    <p>{item.message}</p>
-                  </div>
-                  <StatusPill tone={item.read ? "neutral" : "accent"}>
-                    {item.time}
-                  </StatusPill>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <h3>
-                {workspaceSummary.live
-                  ? "No notifications yet"
-                  : "Loading notifications"}
-              </h3>
-              <p>
-                {workspaceSummary.live
-                  ? "Workspace notifications stored in Supabase will appear here."
-                  : "Waiting for notification rows to sync from Supabase."}
-              </p>
-            </div>
-          )}
         </Card>
 
         <Card>

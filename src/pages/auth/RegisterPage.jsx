@@ -37,10 +37,18 @@ export default function RegisterPage() {
       }
 
       if (user) {
-        showToast(
-          "Account created! Check your email to confirm your account, then log in.",
-        );
-        navigate("/login", { replace: true });
+        // Check if we have an immediate session (auto-confirm enabled)
+        const { supabase } = await import("../../services/integrations.js");
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+          showToast("Account created and logged in!");
+        } else {
+          showToast(
+            "Account created! Check your email to confirm your account, then log in.",
+          );
+          navigate("/login", { replace: true });
+        }
       }
     } catch (err) {
       showToast(err.message || "An unexpected error occurred.");

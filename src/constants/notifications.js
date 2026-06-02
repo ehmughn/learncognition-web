@@ -3,11 +3,10 @@ export const notificationsSeed = [];
 export const teacherNav = [
   { path: "/", label: "Home" },
   { path: "/dashboard", label: "Dashboard" },
-  { path: "/notifications", label: "Notifications" },
+  { path: "/messages", label: "Messages" },
   { path: "/create", label: "Create" },
   { path: "/modules", label: "Modules" },
   { path: "/profile", label: "Profile" },
-  { path: "/settings", label: "Settings" },
 ];
 
 export const guestHighlights = [

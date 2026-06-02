@@ -5,12 +5,12 @@ export function normalizePath(pathname) {
     : pathname;
 }
 
-export function resolveRoute(pathname, isAuthenticated) {
+export function resolveRoute(pathname, isAuthenticated, role = "teacher") {
   const path = normalizePath(pathname);
-  if (path === "/")
-    return isAuthenticated
-      ? { kind: "teacher-home" }
-      : { kind: "guest-landing" };
+  if (path === "/") {
+    if (!isAuthenticated) return { kind: "guest-landing" };
+    return role === "admin" ? { kind: "admin" } : { kind: "teacher-home" };
+  }
   if (path === "/login") return { kind: "login" };
   if (path === "/register") return { kind: "register" };
   if (path === "/verify") return { kind: "verify" };
@@ -18,14 +18,21 @@ export function resolveRoute(pathname, isAuthenticated) {
   if (path === "/reset-password") return { kind: "reset-password" };
   if (path === "/start") return { kind: "start" };
   if (path === "/dashboard") return { kind: "dashboard" };
+  if (path === "/messages") return { kind: "messages" };
   if (path === "/notifications") return { kind: "notifications" };
   if (path === "/create") return { kind: "create" };
   if (path === "/modules") return { kind: "modules" };
   if (path === "/profile") return { kind: "profile" };
   if (path === "/settings") return { kind: "settings" };
+  // Admin routes
   if (path === "/admin") return { kind: "admin" };
   if (path === "/admin/accounts") return { kind: "admin-accounts" };
+  if (path === "/admin/teachers") return { kind: "admin-teachers" };
+  if (path === "/admin/parents") return { kind: "admin-parents" };
+  if (path === "/admin/students") return { kind: "admin-students" };
+  if (path === "/admin/analytics") return { kind: "admin-analytics" };
   if (path === "/admin/items") return { kind: "admin-items" };
+  if (path === "/admin/settings") return { kind: "admin-settings" };
 
   const routes = [
     [

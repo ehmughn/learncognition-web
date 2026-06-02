@@ -16,3 +16,11 @@ export function SecondaryButton({ className = "", children, ...props }) {
     </button>
   );
 }
+
+export function DangerButton({ className = "", children, ...props }) {
+  return (
+    <button className={`button button-danger ${className}`.trim()} {...props}>
+      {children}
+    </button>
+  );
+}

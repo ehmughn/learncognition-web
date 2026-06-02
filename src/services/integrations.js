@@ -20,6 +20,55 @@ const PUBLIC_HOLIDAY_COUNTRY =
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/**
+ * Creates a new user account without signing out the current user.
+ * This uses a secondary, non-persistent Supabase client.
+ * 
+ * @param {Object} params
+ * @param {string} params.email
+ * @param {string} params.password
+ * @param {string} params.full_name
+ * @param {string} params.role
+ * @returns {Promise<{data: any, error: any}>}
+ */
+export async function adminSafeSignUp({ email, password, full_name, role }) {
+  // Create a separate client instance that doesn't persist the session to local storage.
+  // This prevents the new user's session from overwriting the admin's session.
+  const tempClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  });
+
+  const { data, error } = await tempClient.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { full_name, role }
+    }
+  });
+
+  if (error) return { data: null, error };
+
+  // If a specific role was requested that isn't 'teacher' (the default in the trigger),
+  // we need to update the profile.
+  if (data.user && role && role !== 'teacher') {
+    // Wait a tiny bit for the trigger to finish
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ role })
+      .eq("id", data.user.id);
+      
+    if (updateError) console.error("Error updating role:", updateError);
+  }
+
+  return { data, error: null };
+}
+
 function startOfToday() {
   const date = new Date();
   date.setHours(0, 0, 0, 0);

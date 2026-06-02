@@ -9,6 +9,7 @@ import {
   Menu,
   Settings2,
   UserRound,
+  MessageSquare,
 } from "lucide-react";
 import { useApp, usePersistentState } from "../../context/AppContext.jsx";
 import { teacherNav } from "../../constants/notifications.js";
@@ -18,6 +19,7 @@ import { SecondaryButton } from "../ui/Button.jsx";
 const navIcons = {
   "/": Home,
   "/dashboard": LayoutDashboard,
+  "/messages": MessageSquare,
   "/notifications": Bell,
   "/create": FolderPlus,
   "/modules": FolderKanban,
@@ -69,9 +71,11 @@ export function PageShell({
     >
       <aside className="teacher-sidebar">
         <div className="brand-block">
-          {!sidebarCollapsed && (
+          {sidebarCollapsed ? (
+            <img src="/logo.png" alt="LC" className="brand-mark" style={{ width: "24px", height: "24px", objectFit: "contain" }} />
+          ) : (
             <>
-              <div className="brand-mark">LC</div>
+              <img src="/logo.png" alt="LC" className="brand-mark" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
               <div>
                 <p className="brand-label">LearnCognition</p>
               </div>

@@ -32,9 +32,25 @@ export default function LoginPage() {
       }
 
       if (session) {
-        showToast("Logged in successfully!");
-        // Navigation will happen automatically via auth state listener in App.jsx
-        navigate("/dashboard", { replace: true });
+        // Fetch the role to deny access if not allowed
+        const { supabase } = await import("../../services/integrations.js");
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+
+        const allowedRoles = ["admin", "teacher"];
+        if (!profile || !allowedRoles.includes(profile.role)) {
+          // Log out immediately if role is not allowed
+          const { signOut } = await import("../../services/auth.js");
+          await signOut();
+          showToast("Log in denied, your account cannot log in here");
+          setLoading(false);
+          return;
+        }
+
+        showToast("Welcome back!");
       }
     } catch (err) {
       showToast(err.message || "An unexpected error occurred.");
@@ -47,10 +63,6 @@ export default function LoginPage() {
     <AuthShell
       title="Log in"
       subtitle="Access your teacher dashboard and manage modules from one clean workspace."
-      footerLinks={[
-        { label: "Register", to: "/register" },
-        { label: "Forgot password", to: "/forgot-password" },
-      ]}
       backTo="/"
     >
       <form className="form-stack auth-form" onSubmit={submit}>
@@ -75,9 +87,6 @@ export default function LoginPage() {
             <input type="checkbox" defaultChecked />
             <span>Remember me</span>
           </label>
-          <AppLink to="/forgot-password" className="text-link">
-            Forgot password?
-          </AppLink>
         </div>
         <PrimaryButton type="submit" className="full-width" disabled={loading}>
           <LogIn size={16} aria-hidden="true" />

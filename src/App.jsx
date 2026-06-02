@@ -70,9 +70,22 @@ export default function App() {
   const tourTimer = useRef(null);
 
   // Listen to auth state changes
+  const navigate = useCallback((to, { replace = false } = {}) => {
+    const nextPath = normalizePath(to);
+    if (typeof window !== "undefined") {
+      if (replace) {
+        window.history.replaceState({}, "", nextPath);
+      } else {
+        window.history.pushState({}, "", nextPath);
+      }
+    }
+    setPathname(nextPath);
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChange(async (user, supabaseSession) => {
       if (user && supabaseSession) {
+        setWorkspaceLoading(true);
         // 1. Fetch the user's actual role from the profiles table first
         const { data: userData } = await supabase
           .from("profiles")
@@ -83,7 +96,15 @@ export default function App() {
         const actualRole = userData?.role || "teacher";
         console.log("[Auth] Role detected:", actualRole);
 
-        // 2. Set the session once with the correct role
+        // 2. Initialize/Sync workspace data FIRST
+        // This ensures the teacher_workspace_profile is ready before session triggers loading
+        const { profile: wsProfile } = await initializeWorkspace(
+          user.id,
+          user.user_metadata?.full_name || "User",
+          user.email || "",
+        );
+
+        // 3. Set the session once with the correct role
         setSession({
           authenticated: true,
           role: actualRole,
@@ -93,13 +114,6 @@ export default function App() {
           verified: true,
         });
         setPendingFlow(null);
-
-        // 3. Initialize/Sync workspace data in background
-        const { profile: wsProfile } = await initializeWorkspace(
-          user.id,
-          user.user_metadata?.full_name || "User",
-          user.email || "",
-        );
 
         if (wsProfile) {
           setProfile(wsProfile);
@@ -125,6 +139,20 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Automatic redirection after login/register
+  useEffect(() => {
+    if (
+      session.authenticated &&
+      (pathname === "/login" || pathname === "/register")
+    ) {
+      if (session.role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [session.authenticated, session.role, pathname, navigate]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -136,6 +164,7 @@ export default function App() {
         return;
       }
 
+      setWorkspaceLoading(true);
       const [nextWorkspace, nextSummary] = await Promise.all([
         loadWorkspaceData(),
         fetchDashboardSummary(),
@@ -148,7 +177,7 @@ export default function App() {
       setProfile(nextWorkspace.profile);
       setSession((current) => ({
         ...current,
-        role: nextWorkspace.profile?.role || "teacher",
+        role: nextWorkspace.profile?.role || current.role || "teacher",
       }));
       setSettings(nextWorkspace.settings);
       setWorkspaceLive(nextWorkspace.live);
@@ -186,18 +215,6 @@ export default function App() {
     if (!workspaceHydrated || !workspaceLive) return;
     void saveWorkspaceProfile(profile).catch(() => {});
   }, [profile, workspaceLive, workspaceHydrated]);
-
-  const navigate = useCallback((to, { replace = false } = {}) => {
-    const nextPath = normalizePath(to);
-    if (typeof window !== "undefined") {
-      if (replace) {
-        window.history.replaceState({}, "", nextPath);
-      } else {
-        window.history.pushState({}, "", nextPath);
-      }
-    }
-    setPathname(nextPath);
-  }, []);
 
   const showToast = (message) => setToast(message);
   const notificationCounter = useRef(0);
@@ -393,7 +410,7 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const route = resolveRoute(pathname, session.authenticated);
+  const route = resolveRoute(pathname, session.authenticated, session.role);
   const contextValue = {
     route,
     pathname,
@@ -409,7 +426,9 @@ export default function App() {
     workspaceSummary,
     workspaceLive,
     workspaceLoading,
+    authLoaded,
     notifications,
+
     setNotifications,
     addNotification,
     markAllNotificationsRead,
